@@ -2,6 +2,8 @@
 
 namespace AppBundle\Repository;
 
+use AppBundle\Entity\Property;
+
 /**
  * PropertyRepository
  *
@@ -10,4 +12,12 @@ namespace AppBundle\Repository;
  */
 class PropertyRepository extends \Doctrine\ORM\EntityRepository
 {
+
+    /**
+     * @return Property|null
+     */
+    public function findProperty()
+    {
+        return null;
+    }
 }

@@ -17,7 +17,17 @@ monolog:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.log'
             level: debug
-            channels: ['!event']
+            channels: ['!event', '!crawler', '!notifications']
+        crawler:
+            type: stream
+            level: debug
+            path: '%kernel.logs_dir%/crawler_dev.log'
+            channels: ['crawler']
+        notifications:
+            type: stream
+            level: debug
+            path: '%kernel.logs_dir%/notifications_dev.log'
+            channels: ['notifications']
         console:
             type: console
             channels: ['!event', '!doctrine']

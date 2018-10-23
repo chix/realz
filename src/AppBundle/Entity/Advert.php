@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
@@ -10,6 +11,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *
  * @ORM\Table(name="advert")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\AdvertRepository")
+ * 
+ * @Serializer\ExclusionPolicy("all")
+ * 
  * @UniqueEntity({"sourceUrl"})
  */
 class Advert extends BaseEntity
@@ -20,6 +24,8 @@ class Advert extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
+     * 
+     * @Serializer\Expose
      */
     private $id;
 
@@ -27,27 +33,35 @@ class Advert extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="title", type="string", length=255)
+     * 
+     * @Serializer\Expose
      */
     private $title;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="text")
+     * @ORM\Column(name="description", type="text", nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $description;
 
     /**
      * @var int
      *
-     * @ORM\Column(name="price", type="integer")
+     * @ORM\Column(name="price", type="integer", nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $price;
 
     /**
      * @var string $currency
      *
-     * @ORM\Column(name="currency", type="string", length=8)
+     * @ORM\Column(name="currency", type="string", length=8, nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $currency;
 
@@ -55,6 +69,8 @@ class Advert extends BaseEntity
      * @var Source
      *
      * @ORM\ManyToOne(targetEntity="Source", inversedBy="adverts")
+     * 
+     * @Serializer\Expose
      */
     private $source;
 
@@ -62,13 +78,26 @@ class Advert extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="sourceUrl", type="string", length=1024, unique=true)
+     * 
+     * @Serializer\Expose
      */
     private $sourceUrl;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="externalUrl", type="string", length=1024)
+     * 
+     * @Serializer\Expose
+     */
+    private $externalUrl;
 
     /**
      * @var Property
      * 
      * @ORM\ManyToOne(targetEntity="Property", inversedBy="adverts")
+     * 
+     * @Serializer\Expose
      */
     private $property;
 
@@ -247,5 +276,29 @@ class Advert extends BaseEntity
     public function getSource()
     {
         return $this->source;
+    }
+
+    /**
+     * Set externalUrl
+     *
+     * @param string $externalUrl
+     *
+     * @return Advert
+     */
+    public function setExternalUrl($externalUrl)
+    {
+        $this->externalUrl = $externalUrl;
+
+        return $this;
+    }
+
+    /**
+     * Get externalUrl
+     *
+     * @return string
+     */
+    public function getExternalUrl()
+    {
+        return $this->externalUrl;
     }
 }

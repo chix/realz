@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
@@ -10,6 +11,8 @@ use Doctrine\Common\Collections\ArrayCollection;
  *
  * @ORM\Table(name="property")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PropertyRepository")
+ * 
+ * @Serializer\ExclusionPolicy("all")
  */
 class Property extends BaseEntity
 {
@@ -20,6 +23,8 @@ class Property extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
+     * 
+     * @Serializer\Expose
      */
     private $id;
 
@@ -27,6 +32,8 @@ class Property extends BaseEntity
      * @var PropertyType
      * 
      * @ORM\ManyToOne(targetEntity="PropertyType", inversedBy="properties")
+     * 
+     * @Serializer\Expose
      */
     private $type;
 
@@ -34,6 +41,8 @@ class Property extends BaseEntity
      * @var PropertyDisposition
      * 
      * @ORM\ManyToOne(targetEntity="PropertyDisposition", inversedBy="properties")
+     * 
+     * @Serializer\Expose
      */
     private $disposition;
 
@@ -41,6 +50,8 @@ class Property extends BaseEntity
      * @var PropertyConstruction
      * 
      * @ORM\ManyToOne(targetEntity="PropertyConstruction", inversedBy="properties")
+     * 
+     * @Serializer\Expose
      */
     private $construction;
 
@@ -48,6 +59,8 @@ class Property extends BaseEntity
      * @var PropertyCondition
      * 
      * @ORM\ManyToOne(targetEntity="PropertyCondition", inversedBy="properties")
+     * 
+     * @Serializer\Expose
      */
     private $condition;
 
@@ -55,6 +68,8 @@ class Property extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="ownership", type="string", length=255, nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $ownership;
 
@@ -62,55 +77,71 @@ class Property extends BaseEntity
      * @var int
      *
      * @ORM\Column(name="floor", type="integer", nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $floor;
 
     /**
      * @var int
      *
-     * @ORM\Column(name="area", type="integer")
+     * @ORM\Column(name="area", type="integer", nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $area;
 
     /**
      * @var boolean
      *
-     * @ORM\Column(name="balcony", type="boolean")
+     * @ORM\Column(name="balcony", type="boolean", options={"default":"0"})
+     * 
+     * @Serializer\Expose
      */
-    private $balcony;
+    private $balcony = false;
 
     /**
      * @var boolean
      *
-     * @ORM\Column(name="terrace", type="boolean")
+     * @ORM\Column(name="terrace", type="boolean", options={"default":"0"})
+     * 
+     * @Serializer\Expose
      */
-    private $terrace;
+    private $terrace = false;
 
     /**
      * @var boolean
      *
-     * @ORM\Column(name="elevator", type="boolean")
+     * @ORM\Column(name="elevator", type="boolean", options={"default":"0"})
+     * 
+     * @Serializer\Expose
      */
-    private $elevator;
+    private $elevator = false;
 
     /**
      * @var boolean
      *
-     * @ORM\Column(name="parking", type="boolean")
+     * @ORM\Column(name="parking", type="boolean", options={"default":"0"})
+     * 
+     * @Serializer\Expose
      */
-    private $parking;
+    private $parking = false;
 
     /**
      * @var boolean
      *
-     * @ORM\Column(name="loggia", type="boolean")
+     * @ORM\Column(name="loggia", type="boolean", options={"default":"0"})
+     * 
+     * @Serializer\Expose
      */
-    private $loggia;
+    private $loggia = false;
 
     /**
      * @var Location
      * 
      * @ORM\ManyToOne(targetEntity="Location", inversedBy="properties")
+     * 
+     * @Serializer\Expose
      */
     private $location;
 
@@ -120,6 +151,15 @@ class Property extends BaseEntity
      * @ORM\OneToMany(targetEntity="Advert", mappedBy="property")
      */
     private $adverts;
+
+    /**
+     * @var string[] $images
+     *
+     * @ORM\Column(name="images", type="json_array", nullable=true)
+     * 
+     * @Serializer\Expose
+     */
+    private $images = [];
 
     /**
      * Constructor
@@ -483,5 +523,29 @@ class Property extends BaseEntity
     public function getAdverts()
     {
         return $this->adverts;
+    }
+
+    /**
+     * Set images
+     *
+     * @param array $images
+     *
+     * @return Property
+     */
+    public function setImages($images)
+    {
+        $this->images = $images;
+
+        return $this;
+    }
+
+    /**
+     * Get images
+     *
+     * @return array
+     */
+    public function getImages()
+    {
+        return $this->images;
     }
 }

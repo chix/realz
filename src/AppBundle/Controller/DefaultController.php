@@ -13,9 +13,11 @@ class DefaultController extends Controller
      */
     public function indexAction(Request $request)
     {
-        // replace this example code with whatever you need
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['Ahoj', 'Hello', 'Bonjour', 'Nihao', '...']);
+        /*
         return $this->render('default/index.html.twig', [
             'base_dir' => realpath($this->getParameter('kernel.root_dir').'/..').DIRECTORY_SEPARATOR,
         ]);
+        */
     }
 }

@@ -17,5 +17,16 @@ monolog:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.log'
             level: debug
+            channels: ['!crawler', '!notifications']
+        crawler:
+            type: stream
+            level: debug
+            path: '%kernel.logs_dir%/crawler_prod.log'
+            channels: ['crawler']
+        notifications:
+            type: stream
+            level: debug
+            path: '%kernel.logs_dir%/notifications_prod.log'
+            channels: ['notifications']
         console:
             type: console

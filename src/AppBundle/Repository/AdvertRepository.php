@@ -10,4 +10,8 @@ namespace AppBundle\Repository;
  */
 class AdvertRepository extends \Doctrine\ORM\EntityRepository
 {
+    public function getLatestAdverts($limit = 20)
+    {
+        return $this->findBy(['deletedAt' => null], ['id' => 'desc'], $limit);
+    }
 }

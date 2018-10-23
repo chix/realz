@@ -2,8 +2,9 @@
 
 namespace AppBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
@@ -11,6 +12,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *
  * @ORM\Table(name="property_disposition")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PropertyDispositionRepository")
+ * 
+ * @Serializer\ExclusionPolicy("all")
+ * 
  * @UniqueEntity({"code"})
  */
 class PropertyDisposition extends BaseEntity
@@ -35,6 +39,8 @@ class PropertyDisposition extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
+     * 
+     * @Serializer\Expose
      */
     private $id;
 
@@ -42,6 +48,8 @@ class PropertyDisposition extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="name", type="string", length=255)
+     * 
+     * @Serializer\Expose
      */
     private $name;
 
@@ -49,6 +57,8 @@ class PropertyDisposition extends BaseEntity
      * @var string
      * 
      * @ORM\Column(name="code", type="string", length=255, unique=true)
+     * 
+     * @Serializer\Expose
      */
     private $code;
 
@@ -65,6 +75,25 @@ class PropertyDisposition extends BaseEntity
     public function __construct()
     {
         $this->properties = new ArrayCollection();
+    }
+
+    public static function getCodes()
+    {
+        return [
+            self::DISPOSITION_1,
+            self::DISPOSITION_1_1,
+            self::DISPOSITION_1_kk,
+            self::DISPOSITION_2_1,
+            self::DISPOSITION_2_kk,
+            self::DISPOSITION_3_1,
+            self::DISPOSITION_3_kk,
+            self::DISPOSITION_4_1,
+            self::DISPOSITION_4_kk,
+            self::DISPOSITION_5_1,
+            self::DISPOSITION_5_kk,
+            self::DISPOSITION_6,
+            self::DISPOSITION_other,
+        ];
     }
 
     /**

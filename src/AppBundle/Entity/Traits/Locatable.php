@@ -3,21 +3,29 @@
 namespace AppBundle\Entity\Traits;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 
+/**
+ * @Serializer\ExclusionPolicy("all")
+ */
 trait Locatable
 {
 
     /**
      * @var float $latitude
      * 
-     * @ORM\Column(type="decimal", precision=10, scale=8)
+     * @ORM\Column(type="decimal", precision=10, scale=8, nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $latitude;
      
     /**
      * @var float $longitude
      * 
-     * @ORM\Column(type="decimal", precision=11, scale=8)
+     * @ORM\Column(type="decimal", precision=11, scale=8, nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $longitude;
 

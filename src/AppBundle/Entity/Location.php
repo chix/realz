@@ -2,14 +2,17 @@
 
 namespace AppBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Location
  *
  * @ORM\Table(name="location")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\LocationRepository")
+ * 
+ * @Serializer\ExclusionPolicy("all")
  */
 class Location extends BaseEntity
 {
@@ -21,13 +24,17 @@ class Location extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
+     * 
+     * @Serializer\Expose
      */
     private $id;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="street", type="string", length=255)
+     * @ORM\Column(name="street", type="string", length=255, nullable=true)
+     * 
+     * @Serializer\Expose
      */
     private $street;
 
@@ -35,6 +42,8 @@ class Location extends BaseEntity
      * @var City
      * 
      * @ORM\ManyToOne(targetEntity="City", inversedBy="locations")
+     * 
+     * @Serializer\Expose
      */
     private $city;
 
