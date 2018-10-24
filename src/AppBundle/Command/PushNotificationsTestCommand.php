@@ -54,6 +54,7 @@ class PushNotificationsTestCommand extends ContainerAwareCommand
         $message = new \stdClass();
         $message->to = $token;
         $message->channelId = $channel;
+        $message->priority = 'high';
         $message->body = 'Test notification';
         $message->data = new \stdClass();
         $message->data->url = $url;

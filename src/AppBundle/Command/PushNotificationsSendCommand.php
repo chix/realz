@@ -56,6 +56,7 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
             foreach ($adverts as $advert) {
                 $notification = new \stdClass();
                 $notification->channelId = 'new-listing';
+                $notification->priority = 'high';
                 $notification->sound = 'default';
                 $notification->vibrate = true;
                 $notification->to = $activeToken->getToken();
