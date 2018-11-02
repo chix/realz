@@ -13,6 +13,7 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use AppBundle\Entity\Region;
 use AppBundle\Entity\District;
 use AppBundle\Entity\City;
+use AppBundle\Entity\CityDistrict;
 
 class ImportRegistryCommand extends ContainerAwareCommand
 {
@@ -29,6 +30,7 @@ class ImportRegistryCommand extends ContainerAwareCommand
     {
         $em = $this->getContainer()->get('doctrine.orm.entity_manager');
         $cityRepository = $em->getRepository('AppBundle:City');
+        $cityDistrictRepository = $em->getRepository('AppBundle:CityDistrict');
         $districtRepository = $em->getRepository('AppBundle:District');
         $regionRepository = $em->getRepository('AppBundle:Region');
         $kernel = $this->getContainer()->get('kernel');
@@ -36,8 +38,10 @@ class ImportRegistryCommand extends ContainerAwareCommand
 
         $path = $kernel->locateResource('@AppBundle/Resources/data/registry.csv');
         $data = $serializer->decode(file_get_contents($path), 'csv');
+        $pathCityDistricts = $kernel->locateResource('@AppBundle/Resources/data/registry_city_districts.csv');
+        $dataCityDistricts = $serializer->decode(file_get_contents($pathCityDistricts), 'csv');
 
-        $max = count($data);
+        $max = count($data) + count ($dataCityDistricts);
         $batchSize = 25;
         $progressBar = new ProgressBar($output, $max);
         $progressBar->setFormat('Importing registry [%bar% %percent:3s%%] %current%/%max% %remaining:6s%');
@@ -90,6 +94,32 @@ class ImportRegistryCommand extends ContainerAwareCommand
         }
         $em->flush();
         $em->clear();
+
+        foreach ($dataCityDistricts as $i => $row) {
+            $progressBar->advance();
+
+            $city = $cityRepository->findOneByCode($row['city_code']);
+            if ($city === null) {
+                continue;
+            }
+            $cityDistrict = $cityDistrictRepository->findOneByCode($row['district_code']);
+            if ($cityDistrict === null) {
+                $cityDistrict = new CityDistrict();
+                $cityDistrict->setName($row['district']);
+                $cityDistrict->setCode($row['district_code']);
+                $cityDistrict->setCity($city);
+                $cityDistrict->setQueries(explode('|', $row['queries']));
+                $em->persist($cityDistrict);
+            }
+
+            if (($i % $batchSize) === 0) {
+                $em->flush();
+                $em->clear();
+            }
+        }
+        $em->flush();
+        $em->clear();
+
         $progressBar->finish();
         $output->writeln(' <info>✓</info>');
     }

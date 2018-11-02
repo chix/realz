@@ -8,27 +8,23 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * City
+ * CityDistrict
  *
- * @ORM\Table(name="city")
- * @ORM\Entity(repositoryClass="AppBundle\Repository\CityRepository")
+ * @ORM\Table(name="city_district")
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\CityDistrictRepository")
  * 
  * @Serializer\ExclusionPolicy("all")
  * 
  * @UniqueEntity({"code"})
  */
-class City extends BaseEntity
+class CityDistrict
 {
-    use Traits\Locatable;
-
     /**
      * @var int
      *
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * 
-     * @Serializer\Expose
      */
     private $id;
 
@@ -51,36 +47,25 @@ class City extends BaseEntity
     private $code;
 
     /**
-     * @var District
+     * @var City
      * 
-     * @ORM\ManyToOne(targetEntity="District", inversedBy="cities")
-     * 
-     * @Serializer\Expose
+     * @ORM\ManyToOne(targetEntity="City", inversedBy="cityDistricts")
      */
-    private $district;
-
-    /**
-     * @var CityDistrict[]
-     * 
-     * @ORM\OneToMany(targetEntity="CityDistrict", mappedBy="city")
-     */
-    private $cityDistricts;
+    private $city;
 
     /**
      * @var Location[]
      * 
-     * @ORM\OneToMany(targetEntity="Location", mappedBy="city")
+     * @ORM\OneToMany(targetEntity="Location", mappedBy="cityDistrict")
      */
     private $locations;
 
     /**
-     * Constructor
+     * @var string[] $queries
+     *
+     * @ORM\Column(name="queries", type="json_array", nullable=true)
      */
-    public function __construct()
-    {
-        $this->locations = new ArrayCollection();
-        $this->cityDistricts = new ArrayCollection();
-    }
+    private $queries;
 
     /**
      * Get id
@@ -91,13 +76,20 @@ class City extends BaseEntity
     {
         return $this->id;
     }
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->locations = new ArrayCollection();
+    }
 
     /**
      * Set name
      *
      * @param string $name
      *
-     * @return City
+     * @return CityDistrict
      */
     public function setName($name)
     {
@@ -117,35 +109,11 @@ class City extends BaseEntity
     }
 
     /**
-     * Set district
-     *
-     * @param District $district
-     *
-     * @return City
-     */
-    public function setDistrict(District $district = null)
-    {
-        $this->district = $district;
-
-        return $this;
-    }
-
-    /**
-     * Get district
-     *
-     * @return District
-     */
-    public function getDistrict()
-    {
-        return $this->district;
-    }
-
-    /**
      * Set code
      *
      * @param string $code
      *
-     * @return City
+     * @return CityDistrict
      */
     public function setCode($code)
     {
@@ -169,7 +137,7 @@ class City extends BaseEntity
      *
      * @param Location $location
      *
-     * @return City
+     * @return CityDistrict
      */
     public function addLocation(Location $location)
     {
@@ -198,38 +166,51 @@ class City extends BaseEntity
         return $this->locations;
     }
 
-
     /**
-     * Add cityDistrict
+     * Set city
      *
-     * @param CityDistrict $cityDistrict
+     * @param City $city
      *
-     * @return City
+     * @return CityDistrict
      */
-    public function addCityDistrict(CityDistrict $cityDistrict)
+    public function setCity(City $city = null)
     {
-        $this->cityDistricts[] = $cityDistrict;
+        $this->city = $city;
 
         return $this;
     }
 
     /**
-     * Remove cityDistrict
+     * Get city
      *
-     * @param CityDistrict $cityDistrict
+     * @return City
      */
-    public function removeCityDistrict(CityDistrict $cityDistrict)
+    public function getCity()
     {
-        $this->cityDistricts->removeElement($cityDistrict);
+        return $this->city;
     }
 
     /**
-     * Get cityDistricts
+     * Set queries
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @param array $queries
+     *
+     * @return CityDistrict
      */
-    public function getCityDistricts()
+    public function setQueries($queries)
     {
-        return $this->cityDistricts;
+        $this->queries = $queries;
+
+        return $this;
+    }
+
+    /**
+     * Get queries
+     *
+     * @return array
+     */
+    public function getQueries()
+    {
+        return $this->queries;
     }
 }

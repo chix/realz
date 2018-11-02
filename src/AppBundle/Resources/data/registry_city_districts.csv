@@ -1,0 +1,143 @@
+city_code,city,district_code,district_short,district,queries
+505927,Opava,555355,Komárov,Komárov,komárov
+505927,Opava,555339,Malé Hoštice,Malé Hoštice,malé hoštice|hoštice
+505927,Opava,555436,Milostovice,Milostovice,milostovice
+505927,Opava,555321,Opava (nečl.část města),Opava (nečleněná část města),opava|město
+505927,Opava,555401,Podvihov,Podvihov,podvihov
+505927,Opava,555371,Suché Lazce,Suché Lazce,suché lazce|lazce
+505927,Opava,556700,Vávrovice,Vávrovice,vávrovice
+505927,Opava,555461,Vlaštovičky,Vlaštovičky,vlaštovičky
+505927,Opava,555410,Zlatníky,Zlatníky,zlatníky
+554782,Praha,500054,Praha 1,Praha 1,praha 1
+554782,Praha,500224,Praha 10,Praha 10,praha 10
+554782,Praha,547034,Praha 11,Praha 11,praha 11
+554782,Praha,547107,Praha 12,Praha 12,praha 12
+554782,Praha,539694,Praha 13,Praha 13,praha 13
+554782,Praha,547361,Praha 14,Praha 14,praha 14
+554782,Praha,547387,Praha 15,Praha 15,praha 15
+554782,Praha,539601,Praha 16,Praha 16,praha 16
+554782,Praha,547174,Praha 17,Praha 17,praha 17
+554782,Praha,547417,Praha 18,Praha 18,praha 18
+554782,Praha,547344,Praha 19,Praha 19,praha 19
+554782,Praha,500089,Praha 2,Praha 2,praha 2
+554782,Praha,538213,Praha 20,Praha 20,praha 20
+554782,Praha,538949,Praha 21,Praha 21,praha 21
+554782,Praha,538931,Praha 22,Praha 22,praha 22
+554782,Praha,500097,Praha 3,Praha 3,praha 3
+554782,Praha,500119,Praha 4,Praha 4,praha 4
+554782,Praha,500143,Praha 5,Praha 5,praha 5
+554782,Praha,500178,Praha 6,Praha 6,praha 6
+554782,Praha,500186,Praha 7,Praha 7,praha 7
+554782,Praha,500208,Praha 8,Praha 8,praha 8
+554782,Praha,500216,Praha 9,Praha 9,praha 9
+554782,Praha,538060,Praha-Běchovice,Praha-Běchovice,praha-běchovice|běchovice
+554782,Praha,538078,Praha-Benice,Praha-Benice,praha-benice|benice
+554782,Praha,538124,Praha-Březiněves,Praha-Březiněves,praha-březiněves|březiněves
+554782,Praha,547310,Praha-Čakovice,Praha-Čakovice,praha-čakovice|čakovice
+554782,Praha,547298,Praha-Ďáblice,Praha-Ďáblice,praha-ďáblice|ďáblice
+554782,Praha,547301,Praha-Dolní Chabry,Praha-Dolní Chabry,praha-dolní chabry|dolní chabry|chabry
+554782,Praha,547379,Praha-Dol. Měcholupy,Praha-Dolní Měcholupy,praha-dolní měcholupy|dolní měcholupy|měcholupy
+554782,Praha,538175,Praha-Dolní Počernice,Praha-Dolní Počernice,praha-dolní počernice|dolní počernice|počernice
+554782,Praha,538205,Praha-Dubeč,Praha-Dubeč,praha-dubeč|dubeč
+554782,Praha,538302,Praha-Klánovice,Praha-Klánovice,praha-klánovice|klánovice
+554782,Praha,538353,Praha-Koloděje,Praha-Koloděje,praha-koloděje|koloděje
+554782,Praha,538361,Praha-Kolovraty,Praha-Kolovraty,praha-kolovraty|kolovraty
+554782,Praha,538388,Praha-Královice,Praha-Královice,praha-královice|královice
+554782,Praha,538400,Praha-Křeslice,Praha-Křeslice,praha-křeslice|křeslice
+554782,Praha,547042,Praha-Kunratice,Praha-Kunratice,praha-kunratice|kunratice
+554782,Praha,547051,Praha-Libuš,Praha-Libuš,praha-libuš|libuš
+554782,Praha,539449,Praha-Lipence,Praha-Lipence,praha-lipence|lipence
+554782,Praha,539465,Praha-Lochkov,Praha-Lochkov,praha-lochkov|lochkov
+554782,Praha,547140,Praha-Lysolaje,Praha-Lysolaje,praha-lysolaje|lysolaje
+554782,Praha,547158,Praha-Nebušice,Praha-Nebušice,praha-nebušice|nebušice
+554782,Praha,538531,Praha-Nedvězí,Praha-Nedvězí,praha-nedvězí|nedvězí
+554782,Praha,547395,Praha-Petrovice,Praha-Petrovice,praha-petrovice|petrovice
+554782,Praha,539589,Praha-Přední Kopanina,Praha-Přední Kopanina,praha-přední kopanina|přední kopanina|kopanina
+554782,Praha,539635,Praha-Řeporyje,Praha-Řeporyje,praha-řeporyje|řeporyje
+554782,Praha,538736,Praha-Satalice,Praha-Satalice,praha-satalice|satalice
+554782,Praha,539678,Praha-Slivenec,Praha-Slivenec,praha-slivenec|slivenec
+554782,Praha,547271,Praha-Suchdol,Praha-Suchdol,praha-suchdol|suchdol
+554782,Praha,539724,Praha-Šeberov,Praha-Šeberov,praha-šeberov|šeberov
+554782,Praha,547409,Praha-Štěrboholy,Praha-Štěrboholy,praha-štěrboholy|štěrboholy
+554782,Praha,547328,Praha-Troja,Praha-Troja,praha-troja|troja
+554782,Praha,539791,Praha-Újezd,Praha-Újezd,praha-újezd|újezd
+554782,Praha,547115,Praha-Velká Chuchle,Praha-Velká Chuchle,praha-velká chuchle|chuchle
+554782,Praha,539007,Praha-Vinoř,Praha-Vinoř,praha-vinoř|vinoř
+554782,Praha,539864,Praha-Zbraslav,Praha-Zbraslav,praha-zbraslav|zbraslav
+554782,Praha,539899,Praha-Zličín,Praha-Zličín,praha-zličín|zličín
+554791,Plzeň,545970,Plzeň 1,Plzeň 1,plzeň 1
+554791,Plzeň,557978,Plzeň 10-Lhota,Plzeň 10-Lhota,plzeň 10-lhota|plzeň 10|lhota
+554791,Plzeň,545988,Plzeň 2-Slovany,Plzeň 2-Slovany,plzeň 2-slovany|plzeň 2|slovany
+554791,Plzeň,546003,Plzeň 3,Plzeň 3,plzeň 3
+554791,Plzeň,546208,Plzeň 4,Plzeň 4,plzeň 4
+554791,Plzeň,554731,Plzeň 5-Křimice,Plzeň 5-Křimice,plzeň 5-křimice|plzeň 5|křimice
+554791,Plzeň,554758,Plzeň 6-Litice,Plzeň 6-Litice,plzeň 6-litice|plzeň 6|litice
+554791,Plzeň,554766,Plzeň 7-Radčice,Plzeň 7-Radčice,plzeň 7-radčice|plzeň 7|radčice
+554791,Plzeň,554774,Plzeň 8-Černice,Plzeň 8-Černice,plzeň 8-černice|plzeň 8|černice
+554791,Plzeň,559199,Plzeň 9-Malesice,Plzeň 9-Malesice,plzeň 9-malesice|plzeň 9|malesice
+554804,Ústí nad Labem,567892,Ústí nad Labem-město,Ústí nad Labem-město,ústí nad labem-město|město
+554804,Ústí nad Labem,502081,Ústí n.L.-Neštěmice,Ústí nad Labem-Neštěmice,ústí nad labem-neštěmice|neštěmice
+554804,Ústí nad Labem,501298,Ústí n.L.-Severní teras,Ústí nad Labem-Severní terasa,ústí nad labem-severní terasa|severní terasa
+554804,Ústí nad Labem,502316,Ústí n.L.-Střekov,Ústí nad Labem-Střekov,ústí nad labem-střekov|střekov
+554821,Ostrava,554332,Hošťálkovice,Hošťálkovice,hošťálkovice
+554821,Ostrava,554669,Hrabová,Hrabová,hrabová
+554821,Ostrava,554561,Krásné Pole,Krásné Pole,krásné pole
+554821,Ostrava,554324,Lhotka,Lhotka,lhotka
+554821,Ostrava,554286,Marián.Hory a Hulváky,Mariánské Hory a Hulváky,mariánské hory a hulváky|mariánské hory|hulváky
+554821,Ostrava,554570,Martinov,Martinov,martinov
+554821,Ostrava,554430,Michálkovice,Michálkovice,michálkovice
+554821,Ostrava,545911,Morav.Ostrava a Přívoz,Moravská Ostrava a Přívoz,moravská ostrava a přívoz|moravská ostrava|přívoz
+554821,Ostrava,554219,Nová Bělá,Nová Bělá,nová bělá
+554821,Ostrava,554367,Nová Ves,Nová Ves,nová ves
+554821,Ostrava,546135,Ostrava-Jih,Ostrava-Jih,ostrava-jih|jih
+554821,Ostrava,554308,Petřkovice,Petřkovice,petřkovice
+554821,Ostrava,554723,Plesná,Plesná,plesná
+554821,Ostrava,554588,Polanka nad Odrou,Polanka nad Odrou,polanka nad odrou|polanka
+554821,Ostrava,546224,Poruba,Poruba,poruba
+554821,Ostrava,554375,Proskovice,Proskovice,proskovice
+554821,Ostrava,554243,Pustkovec,Pustkovec,pustkovec
+554821,Ostrava,554537,Radvanice a Bartovice,Radvanice a Bartovice,radvanice a bartovice|radvanice|bartovice
+554821,Ostrava,546046,Slezská Ostrava,Slezská Ostrava,slezská ostrava|slezská|slezsko
+554821,Ostrava,554235,Stará Bělá,Stará Bělá,stará bělá
+554821,Ostrava,554685,Svinov,Svinov,svinov
+554821,Ostrava,554715,Třebovice,Třebovice,třebovice
+554821,Ostrava,554227,Vítkovice,Vítkovice,vítkovice
+555134,Pardubice,574716,Pardubice I,Pardubice I,pardubice i|pardubice 1
+555134,Pardubice,555126,Pardubice II,Pardubice II,pardubice ii|pardubice 2
+555134,Pardubice,557064,Pardubice III,Pardubice III,pardubice iii|pardubice 3
+555134,Pardubice,555096,Pardubice IV,Pardubice IV,pardubice iv|pardubice 4
+555134,Pardubice,557072,Pardubice V,Pardubice V,pardubice v|pardubice 5
+555134,Pardubice,555100,Pardubice VI,Pardubice VI,pardubice vi|pardubice 6
+555134,Pardubice,555118,Pardubice VII,Pardubice VII,pardubice vii|pardubice 7
+555134,Pardubice,575020,Pardubice VIII,Pardubice VIII,pardubice viii|pardubice 8
+563889,Liberec,556904,Liberec (nečlen.město),Liberec (nečleněné město),liberec (nečleněné město)|město
+563889,Liberec,556891,Liberec-Vratislavice n.,Liberec-Vratislavice nad Nisou,liberec-vratislavice nad nisou|vratislavice nad nisou|vratislavice
+582786,Brno,550973,Brno-střed,Brno-střed,brno-střed|střed|staré brno|pisárky|stránice|veveří|brno město|brno-město|město brno|město-brno|trnitá|zábrdovice|žlutý kopec|lutý kopec
+582786,Brno,550990,Brno-Žabovřesky,Brno-Žabovřesky,brno-žabovřesky|žabovřesky|abovřesky
+582786,Brno,551007,Brno-Královo Pole,Brno-Královo Pole,brno-královo pole|královo pole|krpole|sadová|ponava
+582786,Brno,551031,Brno-sever,Brno-sever,brno-sever|sever|husovice|soběšice|lesná|černá pole|erná pole
+582786,Brno,551058,Brno-Židenice,Brno-Židenice,brno-židenice|židenice|idenice|juliánov
+582786,Brno,551066,Brno-Černovice,Brno-Černovice,brno-černovice|černovice|ernovice
+582786,Brno,551074,Brno-jih,Brno-jih,brno-jih|jih|komárov|heršpice|přízřenice|štýřice|týřice
+582786,Brno,551082,Brno-Bohunice,Brno-Bohunice,brno-bohunice|bohunice
+582786,Brno,551091,Brno-Starý Lískovec,Brno-Starý Lískovec,brno-starý lískovec|starý lískovec
+582786,Brno,551112,Brno-Nový Lískovec,Brno-Nový Lískovec,brno-nový lískovec|nový lískovec
+582786,Brno,551147,Brno-Kohoutovice,Brno-Kohoutovice,brno-kohoutovice|kohoutovice
+582786,Brno,551171,Brno-Jundrov,Brno-Jundrov,brno-jundrov|jundrov|křemelky
+582786,Brno,551198,Brno-Bystrc,Brno-Bystrc,brno-bystrc|bystrc
+582786,Brno,551210,Brno-Kníničky,Brno-Kníničky,brno-kníničky|kníničky
+582786,Brno,551228,Brno-Komín,Brno-Komín,brno-komín|komín
+582786,Brno,551236,Brno-Medlánky,Brno-Medlánky,brno-medlánky|medlánky
+582786,Brno,551244,Brno-Řečkov. a M.Hora,Brno-Řečkovice a Mokrá Hora,brno-řečkovice a mokrá hora|řečkovice|ečkovice|mokrá hora
+582786,Brno,551252,Brno-Maloměřice a Obř.,Brno-Maloměřice a Obřany,brno-maloměřice a obřany|maloměřice|obřany
+582786,Brno,551279,Brno-Vinohrady,Brno-Vinohrady,brno-vinohrady|vinohrady
+582786,Brno,551287,Brno-Líšeň,Brno-Líšeň,brno-líšeň|líšeň
+582786,Brno,551295,Brno-Slatina,Brno-Slatina,brno-slatina|slatina
+582786,Brno,551309,Brno-Tuřany,Brno-Tuřany,brno-tuřany|tuřany|dvorska|holásky|ivanovice
+582786,Brno,551317,Brno-Chrlice,Brno-Chrlice,brno-chrlice|chrlice
+582786,Brno,551325,Brno-Bosonohy,Brno-Bosonohy,brno-bosonohy|bosonohy
+582786,Brno,551376,Brno-Ivanovice,Brno-Ivanovice,brno-ivanovice|ivanovice
+582786,Brno,551406,Brno-Jehnice,Brno-Jehnice,brno-jehnice|jehnice
+582786,Brno,551422,Brno-Ořešín,Brno-Ořešín,brno-ořešín|ořešín
+582786,Brno,551431,Brno-Útěchov,Brno-Útěchov,brno-útěchov|útěchov|těchov
+582786,Brno,551368,Brno-Žebětín,Brno-Žebětín,brno-žebětín|žebětín|ebětín

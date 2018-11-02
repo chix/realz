@@ -48,6 +48,15 @@ class Location extends BaseEntity
     private $city;
 
     /**
+     * @var CityDistrict
+     * 
+     * @ORM\ManyToOne(targetEntity="CityDistrict", inversedBy="locations")
+     * 
+     * @Serializer\Expose
+     */
+    private $cityDistrict;
+
+    /**
      * @var Property[]
      * 
      * @ORM\OneToMany(targetEntity="Property", mappedBy="location")
@@ -152,5 +161,29 @@ class Location extends BaseEntity
     public function getProperties()
     {
         return $this->properties;
+    }
+
+    /**
+     * Set cityDistrict
+     *
+     * @param CityDistrict $cityDistrict
+     *
+     * @return Location
+     */
+    public function setCityDistrict(CityDistrict $cityDistrict = null)
+    {
+        $this->cityDistrict = $cityDistrict;
+
+        return $this;
+    }
+
+    /**
+     * Get cityDistrict
+     *
+     * @return CityDistrict
+     */
+    public function getCityDistrict()
+    {
+        return $this->cityDistrict;
     }
 }

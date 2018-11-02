@@ -33,7 +33,7 @@ class PushNotificationsTestCommand extends ContainerAwareCommand
             ->setDescription('Send a push notification.')
             ->addArgument('token', InputArgument::REQUIRED, 'Expo token')
             ->addArgument('channel', InputArgument::REQUIRED, 'Android channel ID')
-            ->addArgument('url', InputArgument::REQUIRED, 'Detail URL')
+            ->addArgument('id', InputArgument::REQUIRED, 'Detail ID')
             ->addOption('count', 'c', InputOption::VALUE_REQUIRED, 'How many?', 1)
         ;
     }
@@ -47,7 +47,7 @@ class PushNotificationsTestCommand extends ContainerAwareCommand
 
         $token = $input->getArgument('token');
         $channel = $input->getArgument('channel');
-        $url = $input->getArgument('url');
+        $id = $input->getArgument('id');
         $count = intval($input->getOption('count'));
 
         $data = [];
@@ -57,7 +57,7 @@ class PushNotificationsTestCommand extends ContainerAwareCommand
         $message->priority = 'high';
         $message->body = 'Test notification';
         $message->data = new \stdClass();
-        $message->data->url = $url;
+        $message->data->id = $id;
         $message->sound = 'default';
         $message->vibrate = true;
         for ($i = 1; $i <= $count; $i++) {

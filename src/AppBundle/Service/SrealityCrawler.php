@@ -213,6 +213,8 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $advert->setCurrency('CZK');
                 }
 
+                $this->assignCityDistrict($advert);
+
                 $adverts[$ad['hash_id']] = $advert;
             }
         }

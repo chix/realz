@@ -57,6 +57,7 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
                 $notification = new \stdClass();
                 $notification->channelId = 'new-listing';
                 $notification->priority = 'high';
+                $notification->ttl = 3600;
                 $notification->sound = 'default';
                 $notification->vibrate = true;
                 $notification->to = $activeToken->getToken();
@@ -105,6 +106,9 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
                     $token = $tokenMap[$notifications[$i]->to];
                     /* @var $advert Advert */
                     $advert = $advertMap[$notifications[$i]->data->id];
+
+                    $this->logger->debug('Notification sent to ' . $token->getToken(), json_decode(json_encode($notifications[$i]), true));
+
                     if ($responseData['status'] === 'error') {
                         $this->logger->debug('Incrementing error count on ' . $token->getToken(), $responseData);
                         $token->setErrorCount($token->getErrorCount() + 1);
