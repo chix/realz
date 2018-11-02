@@ -1,5 +1,4 @@
 # REALZ
-=======
 
 ## Installation
 - run `git clone ...` to pull the source code
