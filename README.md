@@ -1,4 +1,4 @@
-# REALZ
+# Realz backend
 
 ## Installation
 - run `git clone ...` to pull the source code
