@@ -19,6 +19,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  */
 class CityDistrict
 {
+    const CODE_UNASSIGNED = 'unassigned';
+
     /**
      * @var int
      *

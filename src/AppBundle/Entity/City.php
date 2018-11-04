@@ -232,4 +232,17 @@ class City extends BaseEntity
     {
         return $this->cityDistricts;
     }
+
+    /**
+     * @return array
+     */
+    public function getCityDistrictCodes()
+    {
+        return array_map(
+            function ($cityDistrict) {
+                return $cityDistrict->getCode();
+            },
+            $this->getCityDistricts()->toArray()
+        );
+    }
 }

@@ -2,7 +2,6 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Entity\PushNotificationToken;
 use AppBundle\Form\PushNotificationTokenType;
 use FOS\RestBundle\Controller\Annotations;
@@ -41,52 +40,24 @@ class ApiController extends Controller
      */
     public function postPushNotificationTokenAction(Request $request)
     {
+        $em = $this->getDoctrine()->getManager();
         $entity = new PushNotificationToken();
-        $form = $this->createForm(PushNotificationTokenType::class, $entity);
+        $form = $this->createForm(PushNotificationTokenType::class, $entity, [
+            'city_repository' => $em->getRepository('AppBundle:City'),
+        ]);
         $form->submit($request->request->all());
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-
             $existingEntity = $em->getRepository('AppBundle:PushNotificationToken')
                 ->findOneByToken($entity->getToken());
             if ($existingEntity !== null) {
                 $entity = $existingEntity;
             }
 
-            // sanitize filters
-            $rawFilter = $request->request->get('filter', []);
-            $filters = [];
-            foreach ($rawFilter as $type => $parameters) {
-                switch ($type) {
-                    case 'price':
-                        if (isset($parameters['gte']) || isset($parameters['lte'])) {
-                            $filters[$type] = [];
-                            if (isset($parameters['gte'])) {
-                                $filters[$type]['gte'] = intval($parameters['gte']);
-                            }
-                            if (isset($parameters['lte'])) {
-                                $filters[$type]['lte'] = intval($parameters['lte']);
-                            }
-                        }
-                        break;
-                    case 'disposition':
-                        if (!empty($parameters)) {
-                            $filters[$type] = [];
-                            foreach ($parameters as $parameter) {
-                                if (in_array($parameter, PropertyDisposition::getCodes())) {
-                                    $filters[$type][] = $parameter;
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
-
             $entity->setActive(1);
             $entity->setErrorCount(0);
-            $entity->setEnabled($request->request->get('enabled', false));
-            $entity->setFilters($filters);
+            $entity->setEnabled($form->getData()->getEnabled());
+            $entity->setFilters($form->getData()->getFilters());
             $em->persist($entity);
             $em->flush();
 
