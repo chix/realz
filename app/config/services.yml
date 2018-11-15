@@ -2,6 +2,7 @@
 # http://symfony.com/doc/current/service_container.html
 parameters:
     crawler.sreality.sourceUrl: https://www.sreality.cz/api/cs/v2/estates
+    crawler.bezrealitky.sourceUrl: https://www.bezrealitky.cz
     expo.notifications.backendUrl: https://exp.host/--/api/v2/push/send
     expo.notifications.receiptsBackendUrl: https://exp.host/--/api/v2/push/getReceipts
 
@@ -11,4 +12,10 @@ services:
         calls:
             - [setEntityManager, ['@doctrine.orm.entity_manager']]
             - [setSourceUrl, ['%crawler.sreality.sourceUrl%']]
+            - [setLogger, ['@monolog.logger.crawler']]
+    crawler_bezrealitky:
+        class: AppBundle\Service\BezrealitkyCrawler
+        calls:
+            - [setEntityManager, ['@doctrine.orm.entity_manager']]
+            - [setSourceUrl, ['%crawler.bezrealitky.sourceUrl%']]
             - [setLogger, ['@monolog.logger.crawler']]

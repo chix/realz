@@ -34,7 +34,9 @@ class ImportNewAdvertsCommand extends ContainerAwareCommand
     {
         $this->em = $this->getContainer()->get('doctrine.orm.entity_manager');
         $this->logger = $this->getContainer()->get('monolog.logger.crawler');
+        $crawlers = [];
         $crawlers[] = $this->getContainer()->get('crawler_sreality');
+        $crawlers[] = $this->getContainer()->get('crawler_bezrealitky');
 
         foreach ($crawlers as $crawler) { /* @var $crawler CrawlerInterface */
             $this->logger->debug('Starting ' . $crawler->getIdentifier());

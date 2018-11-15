@@ -89,7 +89,7 @@ city_code,city,district_code,district_short,district,queries
 554821,Ostrava,545911,Morav.Ostrava a Přívoz,Moravská Ostrava a Přívoz,moravská ostrava a přívoz|moravská ostrava|přívoz
 554821,Ostrava,554219,Nová Bělá,Nová Bělá,nová bělá
 554821,Ostrava,554367,Nová Ves,Nová Ves,nová ves
-554821,Ostrava,546135,Ostrava-Jih,Ostrava-Jih,ostrava-jih|jih
+554821,Ostrava,546135,Ostrava-Jih,Ostrava-Jih,ostrava-jih
 554821,Ostrava,554308,Petřkovice,Petřkovice,petřkovice
 554821,Ostrava,554723,Plesná,Plesná,plesná
 554821,Ostrava,554588,Polanka nad Odrou,Polanka nad Odrou,polanka nad odrou|polanka
@@ -118,7 +118,7 @@ city_code,city,district_code,district_short,district,queries
 582786,Brno,551031,Brno-sever,Brno-sever,brno-sever|sever|husovice|soběšice|lesná|černá pole|erná pole
 582786,Brno,551058,Brno-Židenice,Brno-Židenice,brno-židenice|židenice|idenice|juliánov
 582786,Brno,551066,Brno-Černovice,Brno-Černovice,brno-černovice|černovice|ernovice
-582786,Brno,551074,Brno-jih,Brno-jih,brno-jih|jih|komárov|heršpice|přízřenice|štýřice|týřice
+582786,Brno,551074,Brno-jih,Brno-jih,brno-jih|komárov|heršpice|přízřenice|štýřice|týřice
 582786,Brno,551082,Brno-Bohunice,Brno-Bohunice,brno-bohunice|bohunice
 582786,Brno,551091,Brno-Starý Lískovec,Brno-Starý Lískovec,brno-starý lískovec|starý lískovec
 582786,Brno,551112,Brno-Nový Lískovec,Brno-Nový Lískovec,brno-nový lískovec|nový lískovec

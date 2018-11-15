@@ -73,9 +73,10 @@ abstract class CrawlerBase
 
     /**
      * @param Advert $advert
+     * @param string $cityDistrictString
      * @return CityDistrict|null
      */
-    protected function assignCityDistrict(Advert $advert)
+    protected function assignCityDistrict(Advert $advert, $cityDistrictString = '')
     {
         $property = $advert->getProperty();
         if ($property === null) {
@@ -95,7 +96,7 @@ abstract class CrawlerBase
         }
         $cityDistrict = $this->findMatchingCityDistrict(
             $cityDistricts,
-            $advert->getTitle() . ' ' . $location->getStreet(),
+            $cityDistrictString . ' ' . $advert->getTitle() . ' ' . $location->getStreet(),
             $advert->getDescription()
         );
         if ($cityDistrict !== null) {

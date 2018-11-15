@@ -14,9 +14,6 @@ use AppBundle\Entity\Source;
 class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 {
 
-    /** @var array */
-    protected $regionMap = [];
-
     /** @var boolean */
     protected $fullCrawl = false;
 
