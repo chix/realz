@@ -3,6 +3,7 @@
 parameters:
     crawler.sreality.sourceUrl: https://www.sreality.cz/api/cs/v2/estates
     crawler.bezrealitky.sourceUrl: https://www.bezrealitky.cz
+    crawler.bazos.sourceUrl: https://reality.bazos.cz
     expo.notifications.backendUrl: https://exp.host/--/api/v2/push/send
     expo.notifications.receiptsBackendUrl: https://exp.host/--/api/v2/push/getReceipts
 
@@ -18,4 +19,10 @@ services:
         calls:
             - [setEntityManager, ['@doctrine.orm.entity_manager']]
             - [setSourceUrl, ['%crawler.bezrealitky.sourceUrl%']]
+            - [setLogger, ['@monolog.logger.crawler']]
+    crawler_bazos:
+        class: AppBundle\Service\BazosCrawler
+        calls:
+            - [setEntityManager, ['@doctrine.orm.entity_manager']]
+            - [setSourceUrl, ['%crawler.bazos.sourceUrl%']]
             - [setLogger, ['@monolog.logger.crawler']]

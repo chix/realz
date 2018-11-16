@@ -91,7 +91,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
             }
 
             foreach ($listDomNodes as $node) {
-                $detailPath = $url = trim($node->find('div.product__body p.product__ctas a.btn-primary', 0)->href);
+                $detailPath = trim($node->find('div.product__body p.product__ctas a.btn-primary', 0)->href);
                 $detailUrl = $this->constructDetailUrl($detailPath);
                 $existingAdvert = $advertRepository->findOneBySourceUrl($detailUrl);
                 if ($existingAdvert !== null) {
@@ -114,7 +114,6 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                // TODO implement findProperty()
                 $property = $propertyRepository->findProperty();
                 if ($property !== null) {
 
@@ -201,7 +200,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $images = [];
                     $imageHrefNodes = (array)$mainNode->find('div.main__container div.carousel div.carousel__list a');
                     foreach ($imageHrefNodes as $imageHrefNode) {
-                        if (stristr($imageHrefNode->class, 'gallery-ad-img')) {
+                        if (mb_stristr($imageHrefNode->class, 'gallery-ad-img')) {
                             continue;
                         }
                         $imageNode = $imageHrefNode->find('img', 0);
@@ -224,7 +223,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setTitle(trim($mainNode->find('div.heading h1.heading__title', 0)->innertext));
                 $descriptionNode = $mainNode->find('div.main__container div.b-desc p.b-desc__info', 0);
                 if ($descriptionNode) {
-                    $advert->setDescription(strip_tags(trim($descriptionNode->innertext)));
+                    $advert->setDescription($this->normalizeHtmlString($descriptionNode->innertext));
                 }
                 $priceNode = $mainNode->find('div.heading p.heading__side', 0);
                 if ($priceNode) {

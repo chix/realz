@@ -108,9 +108,9 @@ class ImportRegistryCommand extends ContainerAwareCommand
                 $cityDistrict->setName($row['district']);
                 $cityDistrict->setCode($row['district_code']);
                 $cityDistrict->setCity($city);
-                $cityDistrict->setQueries(explode('|', $row['queries']));
-                $em->persist($cityDistrict);
             }
+            $cityDistrict->setQueries(explode('|', $row['queries']));
+            $em->persist($cityDistrict);
 
             if (($i % $batchSize) === 0) {
                 $em->flush();

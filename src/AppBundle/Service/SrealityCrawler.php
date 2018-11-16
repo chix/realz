@@ -98,7 +98,6 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                // TODO implement findProperty()
                 $property = $propertyRepository->findProperty();
                 if ($property !== null) {
 
@@ -168,9 +167,6 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                                 break;
                             case 'parkování':
                                 $property->setParking((boolean)$item['value']);
-                                break;
-                            case 'stav objektu':
-                                // TODO
                                 break;
                         }
                     }

@@ -115,9 +115,9 @@ city_code,city,district_code,district_short,district,queries
 582786,Brno,550973,Brno-střed,Brno-střed,brno-střed|střed|staré brno|pisárky|stránice|veveří|brno město|brno-město|město brno|město-brno|trnitá|zábrdovice|žlutý kopec|lutý kopec
 582786,Brno,550990,Brno-Žabovřesky,Brno-Žabovřesky,brno-žabovřesky|žabovřesky|abovřesky
 582786,Brno,551007,Brno-Královo Pole,Brno-Královo Pole,brno-královo pole|královo pole|krpole|sadová|ponava
-582786,Brno,551031,Brno-sever,Brno-sever,brno-sever|sever|husovice|soběšice|lesná|černá pole|erná pole
-582786,Brno,551058,Brno-Židenice,Brno-Židenice,brno-židenice|židenice|idenice|juliánov
-582786,Brno,551066,Brno-Černovice,Brno-Černovice,brno-černovice|černovice|ernovice
+582786,Brno,551031,Brno-sever,Brno-sever,brno-sever|sever|husovice|soběšice|lesná|černá pole|erná pole|lesné
+582786,Brno,551058,Brno-Židenice,Brno-Židenice,brno-židenice|židenice|idenice|juliánov|stará osada
+582786,Brno,551066,Brno-Černovice,Brno-Černovice,brno-černovice|černovice|ernovice|černovicích|ernovicích
 582786,Brno,551074,Brno-jih,Brno-jih,brno-jih|komárov|heršpice|přízřenice|štýřice|týřice
 582786,Brno,551082,Brno-Bohunice,Brno-Bohunice,brno-bohunice|bohunice
 582786,Brno,551091,Brno-Starý Lískovec,Brno-Starý Lískovec,brno-starý lískovec|starý lískovec
@@ -130,7 +130,7 @@ city_code,city,district_code,district_short,district,queries
 582786,Brno,551236,Brno-Medlánky,Brno-Medlánky,brno-medlánky|medlánky
 582786,Brno,551244,Brno-Řečkov. a M.Hora,Brno-Řečkovice a Mokrá Hora,brno-řečkovice a mokrá hora|řečkovice|ečkovice|mokrá hora
 582786,Brno,551252,Brno-Maloměřice a Obř.,Brno-Maloměřice a Obřany,brno-maloměřice a obřany|maloměřice|obřany
-582786,Brno,551279,Brno-Vinohrady,Brno-Vinohrady,brno-vinohrady|vinohrady
+582786,Brno,551279,Brno-Vinohrady,Brno-Vinohrady,brno-vinohrady|vinohrady|vinohradech
 582786,Brno,551287,Brno-Líšeň,Brno-Líšeň,brno-líšeň|líšeň
 582786,Brno,551295,Brno-Slatina,Brno-Slatina,brno-slatina|slatina
 582786,Brno,551309,Brno-Tuřany,Brno-Tuřany,brno-tuřany|tuřany|dvorska|holásky|ivanovice
