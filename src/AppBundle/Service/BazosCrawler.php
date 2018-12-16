@@ -71,7 +71,7 @@ class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
                 $title = trim($titleNode->innertext);
-                foreach (['koupím', 'hledám', 'sháním'] as $ignoredWord) {
+                foreach (['koupím', 'hledám', 'sháním', 'poptávám'] as $ignoredWord) {
                     if (mb_stristr($title, $ignoredWord) !== false) {
                         continue 2;
                     }
@@ -156,12 +156,13 @@ class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     $property->setLocation($location);
 
                     $images = [];
-                    $imageNodes = (array)$mainNode->find('table', 1)->find('a img');
-                    foreach ($imageNodes as $imageNode) {
-                        $imageHrefNode = $imageNode->parent();
-                        $image = trim($imageHrefNode->href);
-                        $thumbnail = $image;
-                        //$thumbnail = trim($imageNode->src);
+                    $thumbnailNodes = (array)$mainNode->find('div.fliobal div.flinavigace img');
+                    $imageNodes = (array)$mainNode->find('div.fliobal img.carousel-cell-image');
+                    for ($i = 0; $i < min([count($thumbnailNodes), count($imageNodes)]); $i++) {
+                        $imageNode = $imageNodes[$i];
+                        $thumbnailNode = $thumbnailNodes[$i];
+                        $image = trim($imageNode->{'data-flickity-lazyload'});
+                        $thumbnail = trim($thumbnailNode->src);
                         if (empty($image) || empty($thumbnail)) {
                             continue;
                         }

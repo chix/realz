@@ -121,7 +121,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $street = $latitude = $longitude = null;
                     $cityDistrict = '';
                     
-                    $streetNode = $mainNode->find('div.heading p.heading__perex', 0);
+                    $streetNode = $mainNode->find('div.heading .heading__perex', 0);
                     if ($streetNode) {
                         $street = trim($streetNode->innertext);
                     }
@@ -220,7 +220,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
                 $advert->setProperty($property);
-                $advert->setTitle(trim($mainNode->find('div.heading h1.heading__title', 0)->innertext));
+                $advert->setTitle(trim($mainNode->find('div.heading h1.heading__title span', 0)->innertext));
                 $descriptionNode = $mainNode->find('div.main__container div.b-desc p.b-desc__info', 0);
                 if ($descriptionNode) {
                     $advert->setDescription($this->normalizeHtmlString($descriptionNode->innertext));
