@@ -102,7 +102,6 @@ class BazosCrawler extends CrawlerBase implements CrawlerInterface
 
                 $property = $propertyRepository->findProperty();
                 if ($property !== null) {
-
                 } else {
                     $description = $streetNode = $street = $zipCode = $priceNode = $latitude = $longitude = null;
 
@@ -227,7 +226,6 @@ class BazosCrawler extends CrawlerBase implements CrawlerInterface
      */
     protected function constructDetailUrl($path)
     {
-
         $url = $this->getSourceUrl().$path;
 
         return $url;

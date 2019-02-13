@@ -17,7 +17,6 @@ use AppBundle\Entity\CityDistrict;
 
 class ImportRegistryCommand extends ContainerAwareCommand
 {
-
     protected function configure()
     {
         $this
@@ -41,7 +40,7 @@ class ImportRegistryCommand extends ContainerAwareCommand
         $pathCityDistricts = $kernel->locateResource('@AppBundle/Resources/data/registry_city_districts.csv');
         $dataCityDistricts = $serializer->decode(file_get_contents($pathCityDistricts), 'csv');
 
-        $max = count($data) + count ($dataCityDistricts);
+        $max = count($data) + count($dataCityDistricts);
         $batchSize = 25;
         $progressBar = new ProgressBar($output, $max);
         $progressBar->setFormat('Importing registry [%bar% %percent:3s%%] %current%/%max% %remaining:6s%');

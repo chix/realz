@@ -12,9 +12,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *
  * @ORM\Table(name="property_type")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PropertyTypeRepository")
- * 
+ *
  * @Serializer\ExclusionPolicy("all")
- * 
+ *
  * @UniqueEntity({"code"})
  */
 class PropertyType extends BaseEntity
@@ -29,7 +29,7 @@ class PropertyType extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * 
+     *
      * @Serializer\Expose
      */
     private $id;
@@ -38,23 +38,23 @@ class PropertyType extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="name", type="string", length=255)
-     * 
+     *
      * @Serializer\Expose
      */
     private $name;
 
     /**
      * @var string
-     * 
+     *
      * @ORM\Column(name="code", type="string", length=255, unique=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $code;
 
     /**
      * @var Property[]
-     * 
+     *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="type")
      */
     private $properties;

@@ -116,7 +116,6 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
 
                 $property = $propertyRepository->findProperty();
                 if ($property !== null) {
-
                 } else {
                     $street = $latitude = $longitude = null;
                     $cityDistrict = '';
@@ -172,7 +171,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                             case 'typ budovy':
                                 if (in_array(mb_strtolower($itemValue), ['panel'])) {
                                     $property->setConstruction($constructionPanel);
-                                } else if (in_array(mb_strtolower($itemValue), ['cihla'])) {
+                                } elseif (in_array(mb_strtolower($itemValue), ['cihla'])) {
                                     $property->setConstruction($constructionBrick);
                                 }
                                 break;
@@ -268,7 +267,6 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
      */
     protected function constructDetailUrl($path)
     {
-
         $url = $this->getSourceUrl().$path;
 
         return $url;

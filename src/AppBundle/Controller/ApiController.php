@@ -66,5 +66,4 @@ class ApiController extends Controller
 
         return $form;
     }
-
 }

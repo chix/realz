@@ -12,9 +12,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *
  * @ORM\Table(name="city_district")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\CityDistrictRepository")
- * 
+ *
  * @Serializer\ExclusionPolicy("all")
- * 
+ *
  * @UniqueEntity({"code"})
  */
 class CityDistrict
@@ -34,30 +34,30 @@ class CityDistrict
      * @var string
      *
      * @ORM\Column(name="name", type="string", length=255)
-     * 
+     *
      * @Serializer\Expose
      */
     private $name;
 
     /**
      * @var string
-     * 
+     *
      * @ORM\Column(name="code", type="string", length=255, unique=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $code;
 
     /**
      * @var City
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="City", inversedBy="cityDistricts")
      */
     private $city;
 
     /**
      * @var Location[]
-     * 
+     *
      * @ORM\OneToMany(targetEntity="Location", mappedBy="cityDistrict")
      */
     private $locations;

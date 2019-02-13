@@ -11,7 +11,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @ORM\Table(name="location")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\LocationRepository")
- * 
+ *
  * @Serializer\ExclusionPolicy("all")
  */
 class Location extends BaseEntity
@@ -24,7 +24,7 @@ class Location extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * 
+     *
      * @Serializer\Expose
      */
     private $id;
@@ -33,32 +33,32 @@ class Location extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="street", type="string", length=255, nullable=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $street;
 
     /**
      * @var City
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="City", inversedBy="locations")
-     * 
+     *
      * @Serializer\Expose
      */
     private $city;
 
     /**
      * @var CityDistrict
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="CityDistrict", inversedBy="locations")
-     * 
+     *
      * @Serializer\Expose
      */
     private $cityDistrict;
 
     /**
      * @var Property[]
-     * 
+     *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="location")
      */
     private $properties;

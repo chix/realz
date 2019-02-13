@@ -12,9 +12,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *
  * @ORM\Table(name="property_disposition")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PropertyDispositionRepository")
- * 
+ *
  * @Serializer\ExclusionPolicy("all")
- * 
+ *
  * @UniqueEntity({"code"})
  */
 class PropertyDisposition extends BaseEntity
@@ -39,7 +39,7 @@ class PropertyDisposition extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * 
+     *
      * @Serializer\Expose
      */
     private $id;
@@ -48,23 +48,23 @@ class PropertyDisposition extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="name", type="string", length=255)
-     * 
+     *
      * @Serializer\Expose
      */
     private $name;
 
     /**
      * @var string
-     * 
+     *
      * @ORM\Column(name="code", type="string", length=255, unique=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $code;
 
     /**
      * @var Property[]
-     * 
+     *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="disposition")
      */
     private $properties;

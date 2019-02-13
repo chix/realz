@@ -16,5 +16,4 @@ interface CrawlerInterface
      * @return Advert[]
      */
     public function getNewAdverts();
-
 }

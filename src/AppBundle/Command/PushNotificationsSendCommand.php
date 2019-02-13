@@ -37,7 +37,6 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $em = $this->getContainer()->get('doctrine.orm.entity_manager');
         /* @var $tokenRepository PushNotificationTokenRepository */
         $tokenRepository = $em->getRepository('AppBundle:PushNotificationToken');
@@ -95,7 +94,7 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
                 ],
             ];
             $response = $this->restClient->post($expoBackendUrl, $json, $curlOptions);
-            $isGzip = 0 === mb_strpos($response->getContent() , "\x1f" . "\x8b" . "\x08");
+            $isGzip = 0 === mb_strpos($response->getContent(), "\x1f" . "\x8b" . "\x08");
             $responseContent = ($isGzip) ? gzdecode($response->getContent()) : $response->getContent();
             $responseJson = $serializer->decode($responseContent, 'json');
 

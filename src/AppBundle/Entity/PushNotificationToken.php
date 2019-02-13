@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  *
  * @ORM\Table(name="push_notification_token", indexes={@ORM\Index(name="token_idx", columns={"token"})})
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PushNotificationTokenRepository")
- * 
+ *
  * @Serializer\ExclusionPolicy("all")
  */
 class PushNotificationToken extends BaseEntity
@@ -24,7 +24,7 @@ class PushNotificationToken extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * 
+     *
      * @Serializer\Expose
      */
     private $id;
@@ -33,9 +33,9 @@ class PushNotificationToken extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="token", type="string", length=255)
-     * 
+     *
      * @Assert\NotBlank()
-     * 
+     *
      * @Serializer\Expose
      */
     private $token;
@@ -65,7 +65,7 @@ class PushNotificationToken extends BaseEntity
 
     /**
      * For user activation/deactivation
-     * 
+     *
      * @var boolean
      *
      * @ORM\Column(name="enabled", type="boolean", options={"default" : 1})

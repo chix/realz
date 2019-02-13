@@ -100,7 +100,6 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 
                 $property = $propertyRepository->findProperty();
                 if ($property !== null) {
-
                 } else {
                     $street = $latitude = $longitude = null;
                     if (!empty($adDetail['locality'])) {
@@ -132,7 +131,7 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                             case 'stavba':
                                 if (in_array(mb_strtolower($item['value']), ['panelová'])) {
                                     $property->setConstruction($constructionPanel);
-                                } else if (in_array(mb_strtolower($item['value']), ['cihlová'])) {
+                                } elseif (in_array(mb_strtolower($item['value']), ['cihlová'])) {
                                     $property->setConstruction($constructionBrick);
                                 }
                                 break;
@@ -241,14 +240,13 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
      */
     protected function constructDetailUrl($id)
     {
-
         $url = $this->getSourceUrl().'/'.$id;
 
         return $url;
     }
 
     /**
-     * 
+     *
      * @param string $id
      * @param string $type
      * @param string $subtype

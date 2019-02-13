@@ -11,7 +11,7 @@ use Doctrine\Common\Collections\ArrayCollection;
  *
  * @ORM\Table(name="property")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PropertyRepository")
- * 
+ *
  * @Serializer\ExclusionPolicy("all")
  */
 class Property extends BaseEntity
@@ -23,43 +23,43 @@ class Property extends BaseEntity
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
-     * 
+     *
      * @Serializer\Expose
      */
     private $id;
 
     /**
      * @var PropertyType
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="PropertyType", inversedBy="properties")
-     * 
+     *
      * @Serializer\Expose
      */
     private $type;
 
     /**
      * @var PropertyDisposition
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="PropertyDisposition", inversedBy="properties")
-     * 
+     *
      * @Serializer\Expose
      */
     private $disposition;
 
     /**
      * @var PropertyConstruction
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="PropertyConstruction", inversedBy="properties")
-     * 
+     *
      * @Serializer\Expose
      */
     private $construction;
 
     /**
      * @var PropertyCondition
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="PropertyCondition", inversedBy="properties")
-     * 
+     *
      * @Serializer\Expose
      */
     private $condition;
@@ -68,7 +68,7 @@ class Property extends BaseEntity
      * @var string
      *
      * @ORM\Column(name="ownership", type="string", length=255, nullable=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $ownership;
@@ -77,7 +77,7 @@ class Property extends BaseEntity
      * @var int
      *
      * @ORM\Column(name="floor", type="integer", nullable=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $floor;
@@ -86,7 +86,7 @@ class Property extends BaseEntity
      * @var int
      *
      * @ORM\Column(name="area", type="integer", nullable=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $area;
@@ -95,7 +95,7 @@ class Property extends BaseEntity
      * @var boolean
      *
      * @ORM\Column(name="balcony", type="boolean", options={"default":"0"})
-     * 
+     *
      * @Serializer\Expose
      */
     private $balcony = false;
@@ -104,7 +104,7 @@ class Property extends BaseEntity
      * @var boolean
      *
      * @ORM\Column(name="terrace", type="boolean", options={"default":"0"})
-     * 
+     *
      * @Serializer\Expose
      */
     private $terrace = false;
@@ -113,7 +113,7 @@ class Property extends BaseEntity
      * @var boolean
      *
      * @ORM\Column(name="elevator", type="boolean", options={"default":"0"})
-     * 
+     *
      * @Serializer\Expose
      */
     private $elevator = false;
@@ -122,7 +122,7 @@ class Property extends BaseEntity
      * @var boolean
      *
      * @ORM\Column(name="parking", type="boolean", options={"default":"0"})
-     * 
+     *
      * @Serializer\Expose
      */
     private $parking = false;
@@ -131,23 +131,23 @@ class Property extends BaseEntity
      * @var boolean
      *
      * @ORM\Column(name="loggia", type="boolean", options={"default":"0"})
-     * 
+     *
      * @Serializer\Expose
      */
     private $loggia = false;
 
     /**
      * @var Location
-     * 
+     *
      * @ORM\ManyToOne(targetEntity="Location", inversedBy="properties")
-     * 
+     *
      * @Serializer\Expose
      */
     private $location;
 
     /**
      * @var Advert[]
-     * 
+     *
      * @ORM\OneToMany(targetEntity="Advert", mappedBy="property")
      */
     private $adverts;
@@ -156,7 +156,7 @@ class Property extends BaseEntity
      * @var string[] $images
      *
      * @ORM\Column(name="images", type="json_array", nullable=true)
-     * 
+     *
      * @Serializer\Expose
      */
     private $images = [];
