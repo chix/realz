@@ -23,37 +23,11 @@ abstract class CrawlerBase
     /** @var string */
     protected $sourceUrl;
 
-    /**
-     * @param EntityManager $entityManager
-     */
-    public function setEntityManager(EntityManager $entityManager)
+    public function __construct(EntityManager $entityManager, LoggerInterface $logger, $sourceUrl)
     {
         $this->entityManager = $entityManager;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     * @return $this
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
         $this->logger = $logger;
-
-        return $this;
-    }
-
-    /**
-     * Set sourceUrl
-     *
-     * @param string $sourceUrl
-     *
-     * @return string
-     */
-    public function setSourceUrl($sourceUrl)
-    {
         $this->sourceUrl = $sourceUrl;
-
-        return $this;
     }
 
     /**

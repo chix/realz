@@ -7,16 +7,24 @@ use AppBundle\Entity\PushNotificationToken;
 use AppBundle\Repository\PushNotificationTokenRepository;
 use Circle\RestClientBundle\Services\RestClient;
 use Circle\RestClientBundle\Exceptions\CurlException;
+use Doctrine\ORM\EntityManager;
 use Psr\Log\LoggerInterface;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class PushNotificationsSendCommand extends ContainerAwareCommand
+class PushNotificationsSendCommand extends Command
 {
+    protected static $defaultName = 'app:push-notifications:send';
+
+    /**
+     * @var EntityManager
+     */
+    protected $entityManager;
+
     /**
      * @var LoggerInterface
      */
@@ -27,23 +35,33 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
      */
     private $restClient;
 
+    /**
+     * @var string
+     */
+    protected $expoBackendUrl;
+
+    public function __construct(EntityManager $entityManager, RestClient $restClient, LoggerInterface $logger, $expoBackendUrl)
+    {
+        $this->entityManager = $entityManager;
+        $this->restClient = $restClient;
+        $this->logger = $logger;
+        $this->expoBackendUrl = $expoBackendUrl;
+
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
-            ->setName('app:push-notifications:send')
             ->setDescription('Send push notifications.')
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $em = $this->getContainer()->get('doctrine.orm.entity_manager');
         /* @var $tokenRepository PushNotificationTokenRepository */
-        $tokenRepository = $em->getRepository('AppBundle:PushNotificationToken');
+        $tokenRepository = $this->entityManager->getRepository('AppBundle:PushNotificationToken');
         $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
-        $this->restClient = $this->getContainer()->get('circle.restclient');
-        $this->logger = $this->getContainer()->get('monolog.logger.notifications');
-        $expoBackendUrl = $this->getContainer()->getParameter('expo.notifications.backendUrl');
 
         // load not yet notified adverts for active tokens into notification messages
         $tokenMap = [];
@@ -93,7 +111,7 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
                     'Accept-Encoding: gzip, deflate',
                 ],
             ];
-            $response = $this->restClient->post($expoBackendUrl, $json, $curlOptions);
+            $response = $this->restClient->post($this->expoBackendUrl, $json, $curlOptions);
             $isGzip = 0 === mb_strpos($response->getContent(), "\x1f" . "\x8b" . "\x08");
             $responseContent = ($isGzip) ? gzdecode($response->getContent()) : $response->getContent();
             $responseJson = $serializer->decode($responseContent, 'json');
@@ -119,9 +137,9 @@ class PushNotificationsSendCommand extends ContainerAwareCommand
                         $token->setActive(0);
                     }
                     $token->setLastResponse($responseData);
-                    $em->persist($token);
+                    $this->entityManager->persist($token);
                 }
-                $em->flush();
+                $this->entityManager->flush();
             }
         } catch (CurlException $e) {
             $this->logger->debug($e->getMessage());

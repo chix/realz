@@ -75,7 +75,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         foreach ($pages as $page) {
             $listUrl = $this->constructListUrl($page, $flatType);
             try {
-                $listDom = HtmlDomParser::file_get_html($listUrl);
+                $listDom = HtmlDomParser::str_get_html($this->curlGetContent($listUrl));
             } catch (\Exception $e) {
                 $this->logger->debug('Could not load list URL: ' . $listUrl . ' ' .$e->getMessage());
                 continue;
@@ -99,7 +99,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 try {
-                    $detailDom = HtmlDomParser::file_get_html($detailUrl);
+                    $detailDom = HtmlDomParser::str_get_html($this->curlGetContent($detailUrl));
                 } catch (\Exception $e) {
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl . ' ' . $e->getMessage());
                     continue;

@@ -2,42 +2,56 @@
 
 namespace AppBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Encoder\CsvEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-
 use AppBundle\Entity\Region;
 use AppBundle\Entity\District;
 use AppBundle\Entity\City;
 use AppBundle\Entity\CityDistrict;
+use Doctrine\ORM\EntityManager;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\HttpKernel\Config\FileLocator;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\Encoder\CsvEncoder;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class ImportRegistryCommand extends ContainerAwareCommand
+class ImportRegistryCommand extends Command
 {
+    protected static $defaultName = 'app:import:registry';
+
+    /** @var EntityManager */
+    protected $entityManager;
+
+    /** @var FileLocator */
+    protected $fileLocator;
+
+    public function __construct(EntityManager $entityManager, FileLocator $fileLocator)
+    {
+        $this->entityManager = $entityManager;
+        $this->fileLocator = $fileLocator;
+
+        parent::__construct();
+    }
+
     protected function configure()
     {
         $this
-            ->setName('app:import:registry')
             ->setDescription('Import czech regions, districts and cities.')
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $em = $this->getContainer()->get('doctrine.orm.entity_manager');
-        $cityRepository = $em->getRepository('AppBundle:City');
-        $cityDistrictRepository = $em->getRepository('AppBundle:CityDistrict');
-        $districtRepository = $em->getRepository('AppBundle:District');
-        $regionRepository = $em->getRepository('AppBundle:Region');
-        $kernel = $this->getContainer()->get('kernel');
+        $cityRepository = $this->entityManager->getRepository('AppBundle:City');
+        $cityDistrictRepository = $this->entityManager->getRepository('AppBundle:CityDistrict');
+        $districtRepository = $this->entityManager->getRepository('AppBundle:District');
+        $regionRepository = $this->entityManager->getRepository('AppBundle:Region');
         $serializer = new Serializer([new ObjectNormalizer()], [new CsvEncoder()]);
 
-        $path = $kernel->locateResource('@AppBundle/Resources/data/registry.csv');
+        $path = $this->fileLocator->locate('@AppBundle/Resources/data/registry.csv');
         $data = $serializer->decode(file_get_contents($path), 'csv');
-        $pathCityDistricts = $kernel->locateResource('@AppBundle/Resources/data/registry_city_districts.csv');
+        $pathCityDistricts = $this->fileLocator->locate('@AppBundle/Resources/data/registry_city_districts.csv');
         $dataCityDistricts = $serializer->decode(file_get_contents($pathCityDistricts), 'csv');
 
         $max = count($data) + count($dataCityDistricts);
@@ -56,7 +70,7 @@ class ImportRegistryCommand extends ContainerAwareCommand
                     $region = new Region();
                     $region->setName($row['region']);
                     $region->setCode($row['region_code']);
-                    $em->persist($region);
+                    $this->entityManager->persist($region);
                 }
                 $regionMap[$row['region_code']] = $region;
             }
@@ -68,7 +82,7 @@ class ImportRegistryCommand extends ContainerAwareCommand
                     $district->setName($row['district']);
                     $district->setCode($row['district_code']);
                     $district->setRegion($regionMap[$row['region_code']]);
-                    $em->persist($district);
+                    $this->entityManager->persist($district);
                 }
                 $districtMap[$row['district_code']] = $district;
             }
@@ -81,18 +95,18 @@ class ImportRegistryCommand extends ContainerAwareCommand
                 $city->setDistrict($districtMap[$row['district_code']]);
                 $city->setLatitude(floatval($row['latitude']));
                 $city->setLongitude(floatval($row['longitude']));
-                $em->persist($city);
+                $this->entityManager->persist($city);
             }
 
             if (($i % $batchSize) === 0) {
                 $districtMap = [];
                 $regionMap = [];
-                $em->flush();
-                $em->clear();
+                $this->entityManager->flush();
+                $this->entityManager->clear();
             }
         }
-        $em->flush();
-        $em->clear();
+        $this->entityManager->flush();
+        $this->entityManager->clear();
 
         foreach ($dataCityDistricts as $i => $row) {
             $progressBar->advance();
@@ -109,15 +123,15 @@ class ImportRegistryCommand extends ContainerAwareCommand
                 $cityDistrict->setCity($city);
             }
             $cityDistrict->setQueries(explode('|', $row['queries']));
-            $em->persist($cityDistrict);
+            $this->entityManager->persist($cityDistrict);
 
             if (($i % $batchSize) === 0) {
-                $em->flush();
-                $em->clear();
+                $this->entityManager->flush();
+                $this->entityManager->clear();
             }
         }
-        $em->flush();
-        $em->clear();
+        $this->entityManager->flush();
+        $this->entityManager->clear();
 
         $progressBar->finish();
         $output->writeln(' <info>✓</info>');

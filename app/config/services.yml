@@ -8,21 +8,39 @@ parameters:
     expo.notifications.receiptsBackendUrl: https://exp.host/--/api/v2/push/getReceipts
 
 services:
-    crawler_sreality:
-        class: AppBundle\Service\SrealityCrawler
-        calls:
-            - [setEntityManager, ['@doctrine.orm.entity_manager']]
-            - [setSourceUrl, ['%crawler.sreality.sourceUrl%']]
-            - [setLogger, ['@monolog.logger.crawler']]
-    crawler_bezrealitky:
-        class: AppBundle\Service\BezrealitkyCrawler
-        calls:
-            - [setEntityManager, ['@doctrine.orm.entity_manager']]
-            - [setSourceUrl, ['%crawler.bezrealitky.sourceUrl%']]
-            - [setLogger, ['@monolog.logger.crawler']]
-    crawler_bazos:
-        class: AppBundle\Service\BazosCrawler
-        calls:
-            - [setEntityManager, ['@doctrine.orm.entity_manager']]
-            - [setSourceUrl, ['%crawler.bazos.sourceUrl%']]
-            - [setLogger, ['@monolog.logger.crawler']]
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    AppBundle\:
+        resource: ../../src/AppBundle/{Command}
+    # override to inject specific logger instance
+    AppBundle\Command\ImportNewAdvertsCommand:
+        arguments:
+            $logger: '@monolog.logger.crawler'
+    AppBundle\Command\PushNotificationsReceiptsCommand:
+        arguments:
+            $logger: '@monolog.logger.notifications'
+            $expoBackendUrl: '%expo.notifications.receiptsBackendUrl%'
+    AppBundle\Command\PushNotificationsTestCommand:
+        arguments:
+            $logger: '@monolog.logger.notifications'
+            $expoBackendUrl: '%expo.notifications.backendUrl%'
+    AppBundle\Command\PushNotificationsSendCommand:
+        arguments:
+            $logger: '@monolog.logger.notifications'
+            $expoBackendUrl: '%expo.notifications.backendUrl%'
+
+    AppBundle\Service\SrealityCrawler:
+        arguments:
+            $sourceUrl: '%crawler.sreality.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    AppBundle\Service\BezrealitkyCrawler:
+        arguments:
+            $sourceUrl: '%crawler.bezrealitky.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    AppBundle\Service\BazosCrawler:
+        arguments:
+            $sourceUrl: '%crawler.bazos.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
