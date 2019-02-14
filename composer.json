@@ -25,10 +25,10 @@
         "sensio/framework-extra-bundle": "^3.0.2",
         "stof/doctrine-extensions-bundle": "^1.2",
         "sunra/php-simple-html-dom-parser": "^1.5",
-        "symfony/monolog-bundle": "^3.0.2",
+        "symfony/monolog-bundle": "^3.1.0",
         "symfony/polyfill-apcu": "^1.0",
-        "symfony/swiftmailer-bundle": "^2.3.10",
-        "symfony/symfony": "3.2.*",
+        "symfony/swiftmailer-bundle": "^2.6.4",
+        "symfony/symfony": "3.4.*",
         "twig/twig": "^1.0||^2.0"
     },
     "require-dev": {
@@ -67,8 +67,6 @@
         "incenteev-parameters": {
             "file": "app/config/parameters.yml"
         },
-        "branch-alias": {
-            "dev-master": "3.2-dev"
-        }
+        "branch-alias": null
     }
 }
