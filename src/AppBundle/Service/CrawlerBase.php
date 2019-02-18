@@ -7,6 +7,8 @@ use AppBundle\Entity\CityDistrict;
 use AppBundle\Entity\Property;
 use AppBundle\Entity\PropertyConstruction;
 use AppBundle\Entity\PropertyDisposition;
+use AppBundle\Repository\PropertyConstructionRepository;
+use AppBundle\Repository\PropertyDispositionRepository;
 use Doctrine\ORM\EntityManager;
 use Psr\Log\LoggerInterface;
 
@@ -15,18 +17,29 @@ abstract class CrawlerBase
     /** @var EntityManager */
     protected $entityManager;
 
-    /**
-     * @var LoggerInterface
-     */
+    /** @var LoggerInterface */
     protected $logger;
+
+    /** @var PropertyConstructionRepository */
+    protected $propertyConstructionRepository;
+
+    /** @var PropertyDispositionRepository */
+    protected $propertyDispositionRepository;
 
     /** @var string */
     protected $sourceUrl;
 
-    public function __construct(EntityManager $entityManager, LoggerInterface $logger, $sourceUrl)
-    {
+    public function __construct(
+        EntityManager $entityManager,
+        LoggerInterface $logger,
+        PropertyConstructionRepository $propertyConstructionRepository,
+        PropertyDispositionRepository $propertyDispositionRepository,
+        $sourceUrl
+    ) {
         $this->entityManager = $entityManager;
         $this->logger = $logger;
+        $this->propertyConstructionRepository = $propertyConstructionRepository;
+        $this->propertyDispositionRepository = $propertyDispositionRepository;
         $this->sourceUrl = $sourceUrl;
     }
 
@@ -128,8 +141,6 @@ abstract class CrawlerBase
      */
     protected function loadPropertyFromFulltext(Property $property, $fulltext)
     {
-        $propertyConstructionRepository = $this->entityManager->getRepository(PropertyConstruction::class);
-        $propertyDispositionRepository = $this->entityManager->getRepository(PropertyDisposition::class);
         $dispositionKeywordsMap = [
             PropertyDisposition::DISPOSITION_1 => ['garson'],
             PropertyDisposition::DISPOSITION_1_kk => ['1kk', '1+kk'],
@@ -147,7 +158,7 @@ abstract class CrawlerBase
         ];
         $dispositionMap = [];
         foreach ($dispositionKeywordsMap as $code => $keywords) {
-            $dispositionMap[$code] = $propertyDispositionRepository->findOneByCode($code);
+            $dispositionMap[$code] = $this->propertyDispositionRepository->findOneByCode($code);
         }
 
         $constructionMap = [
@@ -157,7 +168,7 @@ abstract class CrawlerBase
         foreach ($constructionMap as $constructionCode => $keywords) {
             foreach ($keywords as $keyword) {
                 if (mb_stristr($fulltext, $keyword) !== false) {
-                    $property->setConstruction($propertyConstructionRepository->findOneByCode($constructionCode));
+                    $property->setConstruction($this->propertyConstructionRepository->findOneByCode($constructionCode));
                     break 2;
                 }
             }

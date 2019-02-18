@@ -40,11 +40,22 @@ class PushNotificationsSendCommand extends Command
      */
     protected $expoBackendUrl;
 
-    public function __construct(EntityManager $entityManager, RestClient $restClient, LoggerInterface $logger, $expoBackendUrl)
-    {
+    /**
+     * @var PushNotificationTokenRepository
+     */
+    protected $tokenRepository;
+
+    public function __construct(
+        EntityManager $entityManager,
+        RestClient $restClient,
+        LoggerInterface $logger,
+        PushNotificationTokenRepository $tokenRepository,
+        $expoBackendUrl
+    ) {
         $this->entityManager = $entityManager;
         $this->restClient = $restClient;
         $this->logger = $logger;
+        $this->tokenRepository = $tokenRepository;
         $this->expoBackendUrl = $expoBackendUrl;
 
         parent::__construct();
@@ -59,17 +70,15 @@ class PushNotificationsSendCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /* @var $tokenRepository PushNotificationTokenRepository */
-        $tokenRepository = $this->entityManager->getRepository('AppBundle:PushNotificationToken');
         $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
 
         // load not yet notified adverts for active tokens into notification messages
         $tokenMap = [];
         $advertMap = [];
         $notifications = [];
-        $activeTokens = $tokenRepository->getActiveAndEnabled();
+        $activeTokens = $this->tokenRepository->getActiveAndEnabled();
         foreach ($activeTokens as $activeToken) { /* @var $activeToken PushNotificationToken */
-            $adverts = $tokenRepository->getUnnotifiedAdvertsForToken($activeToken);
+            $adverts = $this->tokenRepository->getUnnotifiedAdvertsForToken($activeToken);
             foreach ($adverts as $advert) {
                 $notification = new \stdClass();
                 $notification->channelId = 'new-listing';

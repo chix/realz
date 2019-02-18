@@ -14,7 +14,7 @@ services:
         public: false
 
     AppBundle\:
-        resource: ../../src/AppBundle/{Command}
+        resource: ../../src/AppBundle/{Command,Controller,Form,Repository}
     # override to inject specific logger instance
     AppBundle\Command\ImportNewAdvertsCommand:
         arguments:

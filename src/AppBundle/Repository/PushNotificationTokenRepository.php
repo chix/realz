@@ -5,9 +5,23 @@ namespace AppBundle\Repository;
 use AppBundle\Entity\Advert;
 use AppBundle\Entity\CityDistrict;
 use AppBundle\Entity\PushNotificationToken;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Persistence\ManagerRegistry;
 
-class PushNotificationTokenRepository extends \Doctrine\ORM\EntityRepository
+class PushNotificationTokenRepository extends ServiceEntityRepository
 {
+    /**
+     * @var CityRepository
+     */
+    protected $cityRepository;
+
+    public function __construct(ManagerRegistry $registry, CityRepository $cityRepository)
+    {
+        $this->cityRepository = $cityRepository;
+
+        parent::__construct($registry, PushNotificationToken::class);
+    }
+
     /**
      * @return PushNotificationToken[]
      */
@@ -23,9 +37,6 @@ class PushNotificationTokenRepository extends \Doctrine\ORM\EntityRepository
      */
     public function getUnnotifiedAdvertsForToken($token)
     {
-        /** @var CityRepository $cityRepository  */
-        $cityRepository = $this->getEntityManager()->getRepository('AppBundle:City');
-
         $oneHourAgo = (new \DateTime())->sub((new \DateInterval('PT1H')))->format('Y-m-d H:i:s');
         $ids = $this->createQueryBuilder('qb')
             ->select('ad.id')
@@ -38,7 +49,7 @@ class PushNotificationTokenRepository extends \Doctrine\ORM\EntityRepository
         $filters = $token->getFilters();
         if (!empty($filters)) {
             foreach ($filters as $cityCode => $cityFilters) {
-                $city = $cityRepository->findOneByCode($cityCode);
+                $city = $this->cityRepository->findOneByCode($cityCode);
                 if ($city === null) {
                     continue;
                 }

@@ -3,41 +3,81 @@
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
-use AppBundle\Entity\City;
 use AppBundle\Entity\Location;
 use AppBundle\Entity\Property;
 use AppBundle\Entity\PropertyConstruction;
 use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Entity\PropertyType;
 use AppBundle\Entity\Source;
+use AppBundle\Repository\AdvertRepository;
+use AppBundle\Repository\CityRepository;
+use AppBundle\Repository\LocationRepository;
+use AppBundle\Repository\PropertyRepository;
+use AppBundle\Repository\PropertyConstructionRepository;
+use AppBundle\Repository\PropertyDispositionRepository;
+use AppBundle\Repository\PropertyTypeRepository;
+use AppBundle\Repository\SourceRepository;
+use Doctrine\ORM\EntityManager;
+use Psr\Log\LoggerInterface;
 
 class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 {
+    /** @var AdvertRepository */
+    protected $advertRepository;
+
+    /** @var CityRepository */
+    protected $cityRepository;
+
+    /** @var LocationRepository */
+    protected $locationRepository;
+
+    /** @var PropertyRepository */
+    protected $propertyRepository;
+
+    /** @var PropertyTypeRepository */
+    protected $propertyTypeRepository;
+
+    /** @var SourceRepository */
+    protected $sourceRepository;
 
     /** @var boolean */
     protected $fullCrawl = false;
+
+    public function __construct(
+        EntityManager $entityManager,
+        LoggerInterface $logger,
+        PropertyConstructionRepository $propertyConstructionRepository,
+        PropertyDispositionRepository $propertyDispositionRepository,
+        $sourceUrl,
+        AdvertRepository $advertRepository,
+        CityRepository $cityRepository,
+        LocationRepository $locationRepository,
+        PropertyRepository $propertyRepository,
+        PropertyTypeRepository $propertyTypeRepository,
+        SourceRepository $sourceRepository
+    ) {
+        $this->advertRepository = $advertRepository;
+        $this->cityRepository = $cityRepository;
+        $this->locationRepository = $locationRepository;
+        $this->propertyRepository = $propertyRepository;
+        $this->propertyTypeRepository = $propertyTypeRepository;
+        $this->sourceRepository = $sourceRepository;
+
+        parent::__construct($entityManager, $logger, $propertyConstructionRepository, $propertyDispositionRepository, $sourceUrl);
+    }
 
     /**
      * @inheritDoc
      */
     public function getNewAdverts()
     {
-        $advertRepository = $this->entityManager->getRepository(Advert::class);
-        $cityRepository = $this->entityManager->getRepository(City::class);
-        $locationRepository = $this->entityManager->getRepository(Location::class);
-        $propertyRepository = $this->entityManager->getRepository(Property::class);
-        $propertyConstructionRepository = $this->entityManager->getRepository(PropertyConstruction::class);
-        $propertyDispositionRepository = $this->entityManager->getRepository(PropertyDisposition::class);
-        $propertyTypeRepository = $this->entityManager->getRepository(PropertyType::class);
-        $sourceRepository = $this->entityManager->getRepository(Source::class);
-
-        $srealitySource = $sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
+        $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
         $typeMap = [
-            1 => $propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
-            2 => $propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
-            3 => $propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
+            1 => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
+            2 => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
+            3 => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
         ];
-        $brno = $cityRepository->findOneByName('Brno');
+        $brno = $this->cityRepository->findOneByName('Brno');
         $dispositionMap = [
             1 => PropertyDisposition::DISPOSITION_1,
             2 => PropertyDisposition::DISPOSITION_1_kk,
@@ -54,10 +94,10 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
             16 => PropertyDisposition::DISPOSITION_other,
         ];
         foreach ($dispositionMap as $key => $code) {
-            $dispositionMap[$key] = $propertyDispositionRepository->findOneByCode($code);
+            $dispositionMap[$key] = $this->propertyDispositionRepository->findOneByCode($code);
         }
-        $constructionBrick = $propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_BRICK);
-        $constructionPanel = $propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
+        $constructionBrick = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_BRICK);
+        $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
 
         $page = 1;
         $limit = 60;
@@ -87,7 +127,7 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
                 $detailUrl = $this->constructDetailUrl($ad['hash_id']);
-                $existingAdvert = $advertRepository->findOneBySourceUrl($detailUrl);
+                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl);
                 if ($existingAdvert !== null) {
                     continue;
                 }
@@ -98,7 +138,7 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                $property = $propertyRepository->findProperty();
+                $property = $this->propertyRepository->findProperty();
                 if ($property !== null) {
                 } else {
                     $street = $latitude = $longitude = null;
@@ -109,7 +149,7 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                         $latitude = $adDetail['map']['lat'];
                         $longitude = $adDetail['map']['lon'];
                     }
-                    $location = $locationRepository->findLocation($brno, $street, $latitude, $longitude);
+                    $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
                     if ($location === null) {
                         $location = new Location();
                         $location->setCity($brno);

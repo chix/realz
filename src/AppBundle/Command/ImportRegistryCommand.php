@@ -6,6 +6,10 @@ use AppBundle\Entity\Region;
 use AppBundle\Entity\District;
 use AppBundle\Entity\City;
 use AppBundle\Entity\CityDistrict;
+use AppBundle\Repository\CityRepository;
+use AppBundle\Repository\CityDistrictRepository;
+use AppBundle\Repository\DistrictRepository;
+use AppBundle\Repository\RegionRepository;
 use Doctrine\ORM\EntityManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,10 +30,32 @@ class ImportRegistryCommand extends Command
     /** @var FileLocator */
     protected $fileLocator;
 
-    public function __construct(EntityManager $entityManager, FileLocator $fileLocator)
-    {
+    /** @var CityRepository */
+    protected $cityRepository;
+
+    /** @var CityDistrictRepository */
+    protected $cityDistrictRepository;
+
+    /** @var DistrictRepository */
+    protected $districtRepository;
+
+    /** @var RegionRepository */
+    protected $regionRepository;
+
+    public function __construct(
+        EntityManager $entityManager,
+        FileLocator $fileLocator,
+        CityRepository $cityRepository,
+        CityDistrictRepository $cityDistrictRepository,
+        DistrictRepository $districtRepository,
+        RegionRepository $regionRepository
+    ) {
         $this->entityManager = $entityManager;
         $this->fileLocator = $fileLocator;
+        $this->cityRepository = $cityRepository;
+        $this->cityDistrictRepository = $cityDistrictRepository;
+        $this->districtRepository = $districtRepository;
+        $this->regionRepository = $regionRepository;
 
         parent::__construct();
     }
@@ -43,10 +69,6 @@ class ImportRegistryCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $cityRepository = $this->entityManager->getRepository('AppBundle:City');
-        $cityDistrictRepository = $this->entityManager->getRepository('AppBundle:CityDistrict');
-        $districtRepository = $this->entityManager->getRepository('AppBundle:District');
-        $regionRepository = $this->entityManager->getRepository('AppBundle:Region');
         $serializer = new Serializer([new ObjectNormalizer()], [new CsvEncoder()]);
 
         $path = $this->fileLocator->locate('@AppBundle/Resources/data/registry.csv');
@@ -65,7 +87,7 @@ class ImportRegistryCommand extends Command
             $progressBar->advance();
 
             if (!isset($regionMap[$row['region_code']])) {
-                $region = $regionRepository->findOneByCode($row['region_code']);
+                $region = $this->regionRepository->findOneByCode($row['region_code']);
                 if (!$region) {
                     $region = new Region();
                     $region->setName($row['region']);
@@ -76,7 +98,7 @@ class ImportRegistryCommand extends Command
             }
 
             if (!isset($districtMap[$row['district_code']])) {
-                $district = $districtRepository->findOneByCode($row['district_code']);
+                $district = $this->districtRepository->findOneByCode($row['district_code']);
                 if (!$district) {
                     $district = new District();
                     $district->setName($row['district']);
@@ -87,7 +109,7 @@ class ImportRegistryCommand extends Command
                 $districtMap[$row['district_code']] = $district;
             }
 
-            $city = $cityRepository->findOneByCode($row['city_code']);
+            $city = $this->cityRepository->findOneByCode($row['city_code']);
             if (!$city) {
                 $city = new City();
                 $city->setName($row['city']);
@@ -111,11 +133,11 @@ class ImportRegistryCommand extends Command
         foreach ($dataCityDistricts as $i => $row) {
             $progressBar->advance();
 
-            $city = $cityRepository->findOneByCode($row['city_code']);
+            $city = $this->cityRepository->findOneByCode($row['city_code']);
             if ($city === null) {
                 continue;
             }
-            $cityDistrict = $cityDistrictRepository->findOneByCode($row['district_code']);
+            $cityDistrict = $this->cityDistrictRepository->findOneByCode($row['district_code']);
             if ($cityDistrict === null) {
                 $cityDistrict = new CityDistrict();
                 $cityDistrict->setName($row['district']);
