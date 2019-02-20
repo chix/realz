@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
@@ -9,12 +11,12 @@ use AppBundle\Entity\PropertyConstruction;
 use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Repository\PropertyConstructionRepository;
 use AppBundle\Repository\PropertyDispositionRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 abstract class CrawlerBase
 {
-    /** @var EntityManager */
+    /** @var EntityManagerInterface */
     protected $entityManager;
 
     /** @var LoggerInterface */
@@ -30,11 +32,11 @@ abstract class CrawlerBase
     protected $sourceUrl;
 
     public function __construct(
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         LoggerInterface $logger,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
-        $sourceUrl
+        string $sourceUrl
     ) {
         $this->entityManager = $entityManager;
         $this->logger = $logger;
@@ -43,30 +45,17 @@ abstract class CrawlerBase
         $this->sourceUrl = $sourceUrl;
     }
 
-    /**
-     * Get sourceUrl
-     *
-     * @return string
-     */
-    public function getSourceUrl()
+    public function getSourceUrl(): string
     {
         return $this->sourceUrl;
     }
 
-    /**
-     * @return string
-     */
-    public function getIdentifier()
+    public function getIdentifier(): string
     {
         return (new \ReflectionClass($this))->getShortName();
     }
 
-    /**
-     * @param Advert $advert
-     * @param string $cityDistrictString
-     * @return CityDistrict|null
-     */
-    protected function assignCityDistrict(Advert $advert, $cityDistrictString = '')
+    protected function assignCityDistrict(Advert $advert, string $cityDistrictString = ''): ?CityDistrict
     {
         $property = $advert->getProperty();
         if ($property === null) {
@@ -98,11 +87,8 @@ abstract class CrawlerBase
 
     /**
      * @param CityDistrict[] $cityDistricts
-     * @param string $title
-     * @param string|null $description
-     * @return CityDistrict|null
      */
-    private function findMatchingCityDistrict($cityDistricts, $title, $description = null)
+    private function findMatchingCityDistrict(array $cityDistricts, string $title, ?string $description = null): ?CityDistrict//TODO test
     {
         // search title
         foreach ($cityDistricts as $cityDistrict) {
@@ -135,11 +121,7 @@ abstract class CrawlerBase
         return null;
     }
 
-    /**
-     * @param Property $property
-     * @param string $fulltext
-     */
-    protected function loadPropertyFromFulltext(Property $property, $fulltext)
+    protected function loadPropertyFromFulltext(Property $property, string $fulltext): Property
     {
         $dispositionKeywordsMap = [
             PropertyDisposition::DISPOSITION_1 => ['garson'],
@@ -235,11 +217,7 @@ abstract class CrawlerBase
         return $property;
     }
 
-    /**
-     * @param string $url
-     * @return string|false
-     */
-    protected function curlGetContent($url)
+    protected function curlGetContent(string $url): ?string
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -248,14 +226,10 @@ abstract class CrawlerBase
         curl_setopt($ch, CURLOPT_HEADER, 0);
         $content = curl_exec($ch);
         curl_close($ch);
-        return $content;
+        return $content ?: null;
     }
 
-    /**
-     * @param string $html
-     * @return string
-     */
-    protected function normalizeHtmlString($html)
+    protected function normalizeHtmlString(string $html): string
     {
         $withoutBRs = str_ireplace(['<br>', '<br />', '<br/>'], "\r\n", $html);
         $withoutTags = strip_tags($withoutBRs);

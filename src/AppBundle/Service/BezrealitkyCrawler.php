@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
@@ -17,11 +19,11 @@ use AppBundle\Repository\PropertyConstructionRepository;
 use AppBundle\Repository\PropertyDispositionRepository;
 use AppBundle\Repository\PropertyTypeRepository;
 use AppBundle\Repository\SourceRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Sunra\PhpSimple\HtmlDomParser;
 
-class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
+final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
 {
     /** @var AdvertRepository */
     protected $advertRepository;
@@ -41,15 +43,15 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
     /** @var SourceRepository */
     protected $sourceRepository;
 
-    /** @var boolean */
+    /** @var bool */
     protected $fullCrawl = false;
 
     public function __construct(
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         LoggerInterface $logger,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
-        $sourceUrl,
+        string $sourceUrl,
         AdvertRepository $advertRepository,
         CityRepository $cityRepository,
         LocationRepository $locationRepository,
@@ -70,7 +72,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts()
+    public function getNewAdverts(): array
     {
         $bezrealitkySource = $this->sourceRepository->findOneByCode(Source::SOURCE_BEZREALITKY);
         $typeMap = [
@@ -281,12 +283,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    /**
-     * @param int $page
-     * @param string $propertyType
-     * @return string url
-     */
-    protected function constructListUrl($page = 1, $propertyType = 'byt')
+    protected function constructListUrl(int $page = 1, string $propertyType = 'byt'): string
     {
         $parameters = [
             'ad_type' => 'nabidka-prodej',
@@ -301,11 +298,7 @@ class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         return $url;
     }
 
-    /**
-     * @param string $path
-     * @return string url
-     */
-    protected function constructDetailUrl($path)
+    protected function constructDetailUrl(string $path): string
     {
         $url = $this->getSourceUrl().$path;
 

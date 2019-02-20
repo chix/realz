@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Command;
 
 use AppBundle\Entity\Advert;
@@ -7,7 +9,7 @@ use AppBundle\Entity\PushNotificationToken;
 use AppBundle\Repository\PushNotificationTokenRepository;
 use Circle\RestClientBundle\Services\RestClient;
 use Circle\RestClientBundle\Exceptions\CurlException;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,12 +18,12 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class PushNotificationsSendCommand extends Command
+final class PushNotificationsSendCommand extends Command
 {
     protected static $defaultName = 'app:push-notifications:send';
 
     /**
-     * @var EntityManager
+     * @var EntityManagerInterface
      */
     protected $entityManager;
 
@@ -46,11 +48,11 @@ class PushNotificationsSendCommand extends Command
     protected $tokenRepository;
 
     public function __construct(
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         RestClient $restClient,
         LoggerInterface $logger,
         PushNotificationTokenRepository $tokenRepository,
-        $expoBackendUrl
+        string $expoBackendUrl
     ) {
         $this->entityManager = $entityManager;
         $this->restClient = $restClient;
@@ -61,14 +63,14 @@ class PushNotificationsSendCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Send push notifications.')
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
 
@@ -107,7 +109,7 @@ class PushNotificationsSendCommand extends Command
         $this->logger->debug(count($notifications) . ' notifications to be sent');
 
         if (empty($notifications)) {
-            return;
+            return 0;
         }
 
         //send notifications and mark adverts as already notified (or log delivery error)
@@ -153,5 +155,7 @@ class PushNotificationsSendCommand extends Command
         } catch (CurlException $e) {
             $this->logger->debug($e->getMessage());
         }
+
+        return 0;
     }
 }

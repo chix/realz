@@ -1,19 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Controller;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Routing\Annotation\Route;
 
-class DefaultController extends AbstractController
+final class DefaultController extends AbstractController
 {
     /**
      * @Route("/", name="homepage")
      */
-    public function indexAction(Request $request, KernelInterface $kernel)
+    public function indexAction(Request $request, KernelInterface $kernel): Response
     {
         return new JsonResponse(['Ahoj', 'Hello', 'Bonjour', 'Nihao', '...']);
         /*

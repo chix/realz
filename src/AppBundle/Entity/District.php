@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * District
- *
  * @ORM\Table(name="district")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\DistrictRepository")
  *
@@ -49,7 +50,7 @@ class District extends BaseEntity
     private $code;
 
     /**
-     * @var Region
+     * @var Region|null
      *
      * @ORM\ManyToOne(targetEntity="Region", inversedBy="districts")
      *
@@ -64,126 +65,65 @@ class District extends BaseEntity
      */
     private $cities;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->cities = new ArrayCollection();
     }
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return District
-     */
-    public function setName($name)
+    public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Set region
-     *
-     * @param Region $region
-     *
-     * @return District
-     */
-    public function setRegion(Region $region = null)
+    public function setRegion(?Region $region): self
     {
         $this->region = $region;
 
         return $this;
     }
 
-    /**
-     * Get region
-     *
-     * @return Region
-     */
-    public function getRegion()
+    public function getRegion(): ?Region
     {
         return $this->region;
     }
 
-    /**
-     * Add city
-     *
-     * @param City $city
-     *
-     * @return District
-     */
-    public function addCity(City $city)
+    public function addCity(City $city): self
     {
         $this->cities[] = $city;
 
         return $this;
     }
 
-    /**
-     * Remove city
-     *
-     * @param City $city
-     */
-    public function removeCity(City $city)
+    public function removeCity(City $city): void
     {
         $this->cities->removeElement($city);
     }
 
-    /**
-     * Get cities
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getCities()
+    public function getCities(): Collection
     {
         return $this->cities;
     }
 
-    /**
-     * Set code
-     *
-     * @param string $code
-     *
-     * @return District
-     */
-    public function setCode($code)
+    public function setCode(string $code): self
     {
         $this->code = $code;
 
         return $this;
     }
 
-    /**
-     * Get code
-     *
-     * @return string
-     */
-    public function getCode()
+    public function getCode(): string
     {
         return $this->code;
     }

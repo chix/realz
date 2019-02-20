@@ -1,25 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Command;
 
 use AppBundle\Service\CrawlerInterface;
 use AppBundle\Service\BazosCrawler;
 use AppBundle\Service\BezrealitkyCrawler;
 use AppBundle\Service\SrealityCrawler;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ImportNewAdvertsCommand extends Command
+final class ImportNewAdvertsCommand extends Command
 {
     protected static $defaultName = 'app:import:adverts';
     protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos'];
 
     /**
-     * @var EntityManager
+     * @var EntityManagerInterface
      */
     protected $entityManager;
 
@@ -44,7 +46,7 @@ class ImportNewAdvertsCommand extends Command
     protected $logger;
 
     public function __construct(
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         LoggerInterface $logger,
         BazosCrawler $bazosCrawler,
         BezrealitkyCrawler $bezrealityCrawler,
@@ -59,7 +61,7 @@ class ImportNewAdvertsCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Import new adverts.')
@@ -72,7 +74,7 @@ class ImportNewAdvertsCommand extends Command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $crawlers = [];
         $crawlersInput = $input->getOption('crawlers');
@@ -106,5 +108,7 @@ class ImportNewAdvertsCommand extends Command
             }
             $this->entityManager->flush();
         }
+
+        return 0;
     }
 }

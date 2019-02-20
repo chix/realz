@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use Gedmo\Timestampable\Traits\TimestampableEntity as TimestampableTrait;

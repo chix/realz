@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -7,8 +9,6 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * Advert
- *
  * @ORM\Table(name="advert")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\AdvertRepository")
  *
@@ -39,7 +39,7 @@ class Advert extends BaseEntity
     private $title;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="description", type="text", nullable=true)
      *
@@ -48,7 +48,7 @@ class Advert extends BaseEntity
     private $description;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="price", type="integer", nullable=true)
      *
@@ -57,7 +57,7 @@ class Advert extends BaseEntity
     private $price;
 
     /**
-     * @var string $currency
+     * @var string|null $currency
      *
      * @ORM\Column(name="currency", type="string", length=8, nullable=true)
      *
@@ -66,7 +66,7 @@ class Advert extends BaseEntity
     private $currency;
 
     /**
-     * @var Source
+     * @var Source|null
      *
      * @ORM\ManyToOne(targetEntity="Source", inversedBy="adverts")
      *
@@ -93,7 +93,7 @@ class Advert extends BaseEntity
     private $externalUrl;
 
     /**
-     * @var Property
+     * @var Property|null
      *
      * @ORM\ManyToOne(targetEntity="Property", inversedBy="adverts")
      *
@@ -101,203 +101,103 @@ class Advert extends BaseEntity
      */
     private $property;
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set title
-     *
-     * @param string $title
-     *
-     * @return Advert
-     */
-    public function setTitle($title)
+    public function setTitle(string $title): self
     {
         $this->title = $title;
 
         return $this;
     }
 
-    /**
-     * Get title
-     *
-     * @return string
-     */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->title;
     }
 
-    /**
-     * Set description
-     *
-     * @param string $description
-     *
-     * @return Advert
-     */
-    public function setDescription($description)
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    /**
-     * Get description
-     *
-     * @return string
-     */
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    /**
-     * Set price
-     *
-     * @param integer $price
-     *
-     * @return Advert
-     */
-    public function setPrice($price)
+    public function setPrice(?int $price): self
     {
         $this->price = $price;
 
         return $this;
     }
 
-    /**
-     * Get price
-     *
-     * @return int
-     */
-    public function getPrice()
+    public function getPrice(): ?int
     {
         return $this->price;
     }
 
-    /**
-     * Set sourceUrl
-     *
-     * @param string $sourceUrl
-     *
-     * @return Advert
-     */
-    public function setSourceUrl($sourceUrl)
+    public function setSourceUrl(string $sourceUrl): self
     {
         $this->sourceUrl = $sourceUrl;
 
         return $this;
     }
 
-    /**
-     * Get sourceUrl
-     *
-     * @return string
-     */
-    public function getSourceUrl()
+    public function getSourceUrl(): string
     {
         return $this->sourceUrl;
     }
 
-    /**
-     * Set currency
-     *
-     * @param string $currency
-     * @return Advert
-     */
-    public function setCurrency($currency)
+    public function setCurrency(string $currency): self
     {
         $this->currency = $currency;
 
         return $this;
     }
 
-    /**
-     * Get currency
-     *
-     * @return string
-     */
-    public function getCurrency()
+    public function getCurrency(): string
     {
         return $this->currency;
     }
 
-    /**
-     * Set property
-     *
-     * @param Property $property
-     *
-     * @return Advert
-     */
-    public function setProperty(Property $property = null)
+    public function setProperty(?Property $property): self
     {
         $this->property = $property;
 
         return $this;
     }
 
-    /**
-     * Get property
-     *
-     * @return Property
-     */
-    public function getProperty()
+    public function getProperty(): ?Property
     {
         return $this->property;
     }
 
-    /**
-     * Set source
-     *
-     * @param Source $source
-     *
-     * @return Advert
-     */
-    public function setSource(Source $source = null)
+    public function setSource(?Source $source): self
     {
         $this->source = $source;
 
         return $this;
     }
 
-    /**
-     * Get source
-     *
-     * @return Source
-     */
-    public function getSource()
+    public function getSource(): ?Source
     {
         return $this->source;
     }
 
-    /**
-     * Set externalUrl
-     *
-     * @param string $externalUrl
-     *
-     * @return Advert
-     */
-    public function setExternalUrl($externalUrl)
+    public function setExternalUrl(string $externalUrl): self
     {
         $this->externalUrl = $externalUrl;
 
         return $this;
     }
 
-    /**
-     * Get externalUrl
-     *
-     * @return string
-     */
-    public function getExternalUrl()
+    public function getExternalUrl(): string
     {
         return $this->externalUrl;
     }

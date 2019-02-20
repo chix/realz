@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Repository;
 
 use AppBundle\Entity\Advert;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
 
-class AdvertRepository extends ServiceEntityRepository
+final class AdvertRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -14,10 +16,9 @@ class AdvertRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param integer $limit
      * @return Advert[]
      */
-    public function getLatestAdverts($limit = 20)
+    public function getLatestAdverts(int $limit = 20): array
     {
         return $this->findBy(['deletedAt' => null], ['id' => 'desc'], $limit);
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Command;
 
 use Circle\RestClientBundle\Services\RestClient;
@@ -14,7 +16,7 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class PushNotificationsTestCommand extends Command
+final class PushNotificationsTestCommand extends Command
 {
     protected static $defaultName = 'app:push-notifications:test';
 
@@ -33,7 +35,7 @@ class PushNotificationsTestCommand extends Command
      */
     protected $expoBackendUrl;
 
-    public function __construct(RestClient $restClient, LoggerInterface $logger, $expoBackendUrl)
+    public function __construct(RestClient $restClient, LoggerInterface $logger, string $expoBackendUrl)
     {
         $this->restClient = $restClient;
         $this->logger = $logger;
@@ -42,7 +44,7 @@ class PushNotificationsTestCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Send a push notification.')
@@ -53,7 +55,7 @@ class PushNotificationsTestCommand extends Command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $serializer = new Serializer([new ObjectNormalizer()], [new JsonEncoder()]);
 
@@ -97,5 +99,7 @@ class PushNotificationsTestCommand extends Command
         } catch (CurlException $e) {
             $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
         }
+
+        return 0;
     }
 }

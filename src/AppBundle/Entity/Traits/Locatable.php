@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity\Traits;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -12,7 +14,7 @@ trait Locatable
 {
 
     /**
-     * @var float $latitude
+     * @var float|null
      *
      * @ORM\Column(type="decimal", precision=10, scale=8, nullable=true)
      *
@@ -21,7 +23,7 @@ trait Locatable
     private $latitude;
      
     /**
-     * @var float $longitude
+     * @var float|null
      *
      * @ORM\Column(type="decimal", precision=11, scale=8, nullable=true)
      *
@@ -29,44 +31,24 @@ trait Locatable
      */
     private $longitude;
 
-    /**
-     * Get latitude
-     *
-     * @return float
-     */
-    public function getLatitude()
+    public function getLatitude(): ?float
     {
         return $this->latitude;
     }
 
-    /**
-     * Set latitude
-     *
-     * @param float $latitude
-     */
-    public function setLatitude($latitude)
+    public function setLatitude(?float $latitude): self
     {
         $this->latitude = $latitude;
 
         return $this;
     }
 
-    /**
-     * Get longitude
-     *
-     * @return float
-     */
-    public function getLongitude()
+    public function getLongitude(): ?float
     {
         return $this->longitude;
     }
 
-    /**
-     * Set longitude
-     *
-     * @param float $longitude
-     */
-    public function setLongitude($longitude)
+    public function setLongitude(?float $longitude): self
     {
         $this->longitude = $longitude;
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\PushNotificationToken;
@@ -9,18 +11,18 @@ use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Repository\AdvertRepository;
 use AppBundle\Repository\CityRepository;
 use AppBundle\Repository\PushNotificationTokenRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\Annotations;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 
-class ApiController extends AbstractController
+final class ApiController extends AbstractController
 {
 
     /**
      * @Annotations\Get("/adverts")
      */
-    public function getAdvertsAction(AdvertRepository $advertRepository)
+    public function getAdvertsAction(AdvertRepository $advertRepository): array
     {
         return $advertRepository->getLatestAdverts();
     }
@@ -28,7 +30,7 @@ class ApiController extends AbstractController
     /**
      * @Annotations\Get("/adverts/{id}", requirements={"id"="[0-9]+"})
      */
-    public function getAdvertAction(AdvertRepository $advertRepository, $id)
+    public function getAdvertAction(AdvertRepository $advertRepository, string $id)
     {
         $advert = $advertRepository->find($id);
         if ($advert === null) {
@@ -42,7 +44,7 @@ class ApiController extends AbstractController
      */
     public function postPushNotificationTokenAction(
         Request $request,
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         PushNotificationTokenRepository $tokenRepository,
         CityRepository $cityRepository
     ) {
@@ -69,12 +71,7 @@ class ApiController extends AbstractController
         return $form;
     }
 
-    /**
-     * @param array $rawFilters
-     * @param CityRepository $cityRepository
-     * @return array
-     */
-    private function sanitizeFilters($rawFilters, CityRepository $cityRepository)
+    private function sanitizeFilters(array $rawFilters, CityRepository $cityRepository): array
     {
         $filters = [];
 

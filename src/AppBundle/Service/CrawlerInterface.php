@@ -1,19 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
 
 interface CrawlerInterface
 {
-
-    /**
-     * @return string
-     */
-    public function getIdentifier();
+    public function getIdentifier(): string;
 
     /**
      * @return Advert[]
      */
-    public function getNewAdverts();
+    public function getNewAdverts(): array;
 }

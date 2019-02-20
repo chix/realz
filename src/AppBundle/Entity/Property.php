@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation as Serializer;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
- * Property
- *
  * @ORM\Table(name="property")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PropertyRepository")
  *
@@ -29,7 +30,7 @@ class Property extends BaseEntity
     private $id;
 
     /**
-     * @var PropertyType
+     * @var PropertyType|null
      *
      * @ORM\ManyToOne(targetEntity="PropertyType", inversedBy="properties")
      *
@@ -38,7 +39,7 @@ class Property extends BaseEntity
     private $type;
 
     /**
-     * @var PropertyDisposition
+     * @var PropertyDisposition|null
      *
      * @ORM\ManyToOne(targetEntity="PropertyDisposition", inversedBy="properties")
      *
@@ -47,7 +48,7 @@ class Property extends BaseEntity
     private $disposition;
 
     /**
-     * @var PropertyConstruction
+     * @var PropertyConstruction|null
      *
      * @ORM\ManyToOne(targetEntity="PropertyConstruction", inversedBy="properties")
      *
@@ -56,7 +57,7 @@ class Property extends BaseEntity
     private $construction;
 
     /**
-     * @var PropertyCondition
+     * @var PropertyCondition|null
      *
      * @ORM\ManyToOne(targetEntity="PropertyCondition", inversedBy="properties")
      *
@@ -65,7 +66,7 @@ class Property extends BaseEntity
     private $condition;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="ownership", type="string", length=255, nullable=true)
      *
@@ -74,7 +75,7 @@ class Property extends BaseEntity
     private $ownership;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="floor", type="integer", nullable=true)
      *
@@ -83,7 +84,7 @@ class Property extends BaseEntity
     private $floor;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="area", type="integer", nullable=true)
      *
@@ -92,7 +93,7 @@ class Property extends BaseEntity
     private $area;
 
     /**
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="balcony", type="boolean", options={"default":"0"})
      *
@@ -101,7 +102,7 @@ class Property extends BaseEntity
     private $balcony = false;
 
     /**
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="terrace", type="boolean", options={"default":"0"})
      *
@@ -110,7 +111,7 @@ class Property extends BaseEntity
     private $terrace = false;
 
     /**
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="elevator", type="boolean", options={"default":"0"})
      *
@@ -119,7 +120,7 @@ class Property extends BaseEntity
     private $elevator = false;
 
     /**
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="parking", type="boolean", options={"default":"0"})
      *
@@ -128,7 +129,7 @@ class Property extends BaseEntity
     private $parking = false;
 
     /**
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="loggia", type="boolean", options={"default":"0"})
      *
@@ -137,7 +138,7 @@ class Property extends BaseEntity
     private $loggia = false;
 
     /**
-     * @var Location
+     * @var Location|null
      *
      * @ORM\ManyToOne(targetEntity="Location", inversedBy="properties")
      *
@@ -153,7 +154,7 @@ class Property extends BaseEntity
     private $adverts;
 
     /**
-     * @var string[] $images
+     * @var string[]|null $images
      *
      * @ORM\Column(name="images", type="json_array", nullable=true)
      *
@@ -161,390 +162,197 @@ class Property extends BaseEntity
      */
     private $images = [];
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->adverts = new ArrayCollection();
     }
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set ownership
-     *
-     * @param string $ownership
-     *
-     * @return Property
-     */
-    public function setOwnership($ownership)
+    public function setOwnership(?string $ownership): self
     {
         $this->ownership = $ownership;
 
         return $this;
     }
 
-    /**
-     * Get ownership
-     *
-     * @return string
-     */
-    public function getOwnership()
+    public function getOwnership(): ?string
     {
         return $this->ownership;
     }
 
-    /**
-     * Set floor
-     *
-     * @param integer $floor
-     *
-     * @return Property
-     */
-    public function setFloor($floor)
+    public function setFloor(?int $floor): self
     {
         $this->floor = $floor;
 
         return $this;
     }
 
-    /**
-     * Get floor
-     *
-     * @return int
-     */
-    public function getFloor()
+    public function getFloor(): ?int
     {
         return $this->floor;
     }
 
-    /**
-     * Set area
-     *
-     * @param integer $area
-     *
-     * @return Property
-     */
-    public function setArea($area)
+    public function setArea(?int $area): self
     {
         $this->area = $area;
 
         return $this;
     }
 
-    /**
-     * Get area
-     *
-     * @return int
-     */
-    public function getArea()
+    public function getArea(): ?int
     {
         return $this->area;
     }
 
-    /**
-     * Set balcony
-     *
-     * @param boolean $balcony
-     *
-     * @return Property
-     */
-    public function setBalcony($balcony)
+    public function setBalcony(bool $balcony): self
     {
         $this->balcony = $balcony;
 
         return $this;
     }
 
-    /**
-     * Get balcony
-     *
-     * @return boolean
-     */
-    public function getBalcony()
+    public function getBalcony(): bool
     {
         return $this->balcony;
     }
 
-    /**
-     * Set terrace
-     *
-     * @param boolean $terrace
-     *
-     * @return Property
-     */
-    public function setTerrace($terrace)
+    public function setTerrace(bool $terrace): self
     {
         $this->terrace = $terrace;
 
         return $this;
     }
 
-    /**
-     * Get terrace
-     *
-     * @return boolean
-     */
-    public function getTerrace()
+    public function getTerrace(): bool
     {
         return $this->terrace;
     }
 
-    /**
-     * Set elevator
-     *
-     * @param boolean $elevator
-     *
-     * @return Property
-     */
-    public function setElevator($elevator)
+    public function setElevator(bool $elevator): self
     {
         $this->elevator = $elevator;
 
         return $this;
     }
 
-    /**
-     * Get elevator
-     *
-     * @return boolean
-     */
-    public function getElevator()
+    public function getElevator(): bool
     {
         return $this->elevator;
     }
 
-    /**
-     * Set parking
-     *
-     * @param boolean $parking
-     *
-     * @return Property
-     */
-    public function setParking($parking)
+    public function setParking(bool $parking): self
     {
         $this->parking = $parking;
 
         return $this;
     }
 
-    /**
-     * Get parking
-     *
-     * @return boolean
-     */
-    public function getParking()
+    public function getParking(): bool
     {
         return $this->parking;
     }
 
-    /**
-     * Set loggia
-     *
-     * @param boolean $loggia
-     *
-     * @return Property
-     */
-    public function setLoggia($loggia)
+    public function setLoggia(bool $loggia): self
     {
         $this->loggia = $loggia;
 
         return $this;
     }
 
-    /**
-     * Get loggia
-     *
-     * @return boolean
-     */
-    public function getLoggia()
+    public function getLoggia(): bool
     {
         return $this->loggia;
     }
 
-    /**
-     * Set type
-     *
-     * @param PropertyType $type
-     *
-     * @return Property
-     */
-    public function setType(PropertyType $type = null)
+    public function setType(?PropertyType $type): self
     {
         $this->type = $type;
 
         return $this;
     }
 
-    /**
-     * Get type
-     *
-     * @return PropertyType
-     */
-    public function getType()
+    public function getType(): ?PropertyType
     {
         return $this->type;
     }
 
-    /**
-     * Set disposition
-     *
-     * @param PropertyDisposition $disposition
-     *
-     * @return Property
-     */
-    public function setDisposition(PropertyDisposition $disposition = null)
+    public function setDisposition(?PropertyDisposition $disposition): self
     {
         $this->disposition = $disposition;
 
         return $this;
     }
 
-    /**
-     * Get disposition
-     *
-     * @return PropertyDisposition
-     */
-    public function getDisposition()
+    public function getDisposition(): ?PropertyDisposition
     {
         return $this->disposition;
     }
 
-    /**
-     * Set construction
-     *
-     * @param PropertyConstruction $construction
-     *
-     * @return Property
-     */
-    public function setConstruction(PropertyConstruction $construction = null)
+    public function setConstruction(?PropertyConstruction $construction = null): self
     {
         $this->construction = $construction;
 
         return $this;
     }
 
-    /**
-     * Get construction
-     *
-     * @return PropertyConstruction
-     */
-    public function getConstruction()
+    public function getConstruction(): ?PropertyConstruction
     {
         return $this->construction;
     }
 
-    /**
-     * Set condition
-     *
-     * @param PropertyCondition $condition
-     *
-     * @return Property
-     */
-    public function setCondition(PropertyCondition $condition = null)
+    public function setCondition(?PropertyCondition $condition): self
     {
         $this->condition = $condition;
 
         return $this;
     }
 
-    /**
-     * Get condition
-     *
-     * @return PropertyCondition
-     */
-    public function getCondition()
+    public function getCondition(): ?PropertyCondition
     {
         return $this->condition;
     }
 
-    /**
-     * Set location
-     *
-     * @param Location $location
-     *
-     * @return Property
-     */
-    public function setLocation(Location $location = null)
+    public function setLocation(?Location $location): self
     {
         $this->location = $location;
 
         return $this;
     }
 
-    /**
-     * Get location
-     *
-     * @return Location
-     */
-    public function getLocation()
+    public function getLocation(): ?Location
     {
         return $this->location;
     }
 
-    /**
-     * Add advert
-     *
-     * @param Advert $advert
-     *
-     * @return Property
-     */
-    public function addAdvert(Advert $advert)
+    public function addAdvert(Advert $advert): self
     {
         $this->adverts[] = $advert;
 
         return $this;
     }
 
-    /**
-     * Remove advert
-     *
-     * @param Advert $advert
-     */
-    public function removeAdvert(Advert $advert)
+    public function removeAdvert(Advert $advert): void
     {
         $this->adverts->removeElement($advert);
     }
 
-    /**
-     * Get adverts
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getAdverts()
+    public function getAdverts(): Collection
     {
         return $this->adverts;
     }
 
-    /**
-     * Set images
-     *
-     * @param array $images
-     *
-     * @return Property
-     */
-    public function setImages($images)
+    public function setImages(?array $images): self
     {
         $this->images = $images;
 
         return $this;
     }
 
-    /**
-     * Get images
-     *
-     * @return array
-     */
-    public function getImages()
+    public function getImages(): ?array
     {
         return $this->images;
     }

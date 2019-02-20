@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
@@ -17,10 +19,10 @@ use AppBundle\Repository\PropertyConstructionRepository;
 use AppBundle\Repository\PropertyDispositionRepository;
 use AppBundle\Repository\PropertyTypeRepository;
 use AppBundle\Repository\SourceRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
-class SrealityCrawler extends CrawlerBase implements CrawlerInterface
+final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 {
     /** @var AdvertRepository */
     protected $advertRepository;
@@ -40,15 +42,15 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
     /** @var SourceRepository */
     protected $sourceRepository;
 
-    /** @var boolean */
+    /** @var bool */
     protected $fullCrawl = false;
 
     public function __construct(
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         LoggerInterface $logger,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
-        $sourceUrl,
+        string $sourceUrl,
         AdvertRepository $advertRepository,
         CityRepository $cityRepository,
         LocationRepository $locationRepository,
@@ -69,7 +71,7 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts()
+    public function getNewAdverts(): array
     {
         $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
         $typeMap = [
@@ -254,12 +256,7 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    /**
-     * @param int $page
-     * @param int $limit
-     * @return string url
-     */
-    protected function constructListUrl($page, $limit)
+    protected function constructListUrl(int $page, int $limit): string
     {
         $parameters = [
             'category_main_cb' => 1,
@@ -274,29 +271,17 @@ class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         return $url;
     }
 
-    /**
-     * @param string $id
-     * @return string url
-     */
-    protected function constructDetailUrl($id)
+    protected function constructDetailUrl(int $id): string
     {
         $url = $this->getSourceUrl().'/'.$id;
 
         return $url;
     }
 
-    /**
-     *
-     * @param string $id
-     * @param string $type
-     * @param string $subtype
-     * @param string $locality
-     * @return string url
-     */
-    protected function constructExternalUrl($id, $type, $subtype, $locality)
+    protected function constructExternalUrl(int $id, string $type, string $subtype, string $locality): string
     {
         $urlParts = parse_url($this->getSourceUrl());
-        $url = vsprintf('%s://%s/detail/prodej/%s/%s/%s/%s', [
+        $url = vsprintf('%s://%s/detail/prodej/%s/%s/%s/%d', [
             $urlParts['scheme'],
             $urlParts['host'],
             $type,

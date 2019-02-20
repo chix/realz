@@ -1,16 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use AppBundle\Entity\Advert;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * PushNotificationToken
- *
  * @ORM\Table(name="push_notification_token", indexes={@ORM\Index(name="token_idx", columns={"token"})})
  * @ORM\Entity(repositoryClass="AppBundle\Repository\PushNotificationTokenRepository")
  *
@@ -43,7 +44,7 @@ class PushNotificationToken extends BaseEntity
     /**
      * For system activation/deactivation
      *
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="active", type="boolean", options={"default" : 1})
      */
@@ -57,7 +58,7 @@ class PushNotificationToken extends BaseEntity
     private $errorCount;
 
     /**
-     * @var string[] $lastResponse
+     * @var string[]|null $lastResponse
      *
      * @ORM\Column(name="last_response", type="json_array", nullable=true)
      */
@@ -66,14 +67,14 @@ class PushNotificationToken extends BaseEntity
     /**
      * For user activation/deactivation
      *
-     * @var boolean
+     * @var bool
      *
      * @ORM\Column(name="enabled", type="boolean", options={"default" : 1})
      */
     private $enabled;
 
     /**
-     * @var string[] $filters
+     * @var string[]|null $filters
      *
      * @ORM\Column(name="filters", type="json_array", nullable=true)
      */
@@ -89,198 +90,101 @@ class PushNotificationToken extends BaseEntity
      */
     private $adverts;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->adverts = new ArrayCollection();
     }
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set token
-     *
-     * @param string $token
-     *
-     * @return PushNotificationToken
-     */
-    public function setToken($token)
+    public function setToken(string $token): self
     {
         $this->token = $token;
 
         return $this;
     }
 
-    /**
-     * Get token
-     *
-     * @return string
-     */
-    public function getToken()
+    public function getToken(): string
     {
         return $this->token;
     }
 
-    /**
-     * Set active
-     *
-     * @param boolean $active
-     *
-     * @return PushNotificationToken
-     */
-    public function setActive($active)
+    public function setActive(bool $active): self
     {
         $this->active = $active;
 
         return $this;
     }
 
-    /**
-     * Get active
-     *
-     * @return boolean
-     */
-    public function getActive()
+    public function getActive(): bool
     {
         return $this->active;
     }
 
-    /**
-     * Set errorCount
-     *
-     * @param integer $errorCount
-     *
-     * @return PushNotificationToken
-     */
-    public function setErrorCount($errorCount)
+    public function setErrorCount(int $errorCount): self
     {
         $this->errorCount = $errorCount;
 
         return $this;
     }
 
-    /**
-     * Get errorCount
-     *
-     * @return integer
-     */
-    public function getErrorCount()
+    public function getErrorCount(): int
     {
         return $this->errorCount;
     }
 
-    /**
-     * Set lastResponse
-     *
-     * @param array $lastResponse
-     *
-     * @return PushNotificationToken
-     */
-    public function setLastResponse($lastResponse)
+    public function setLastResponse(?array $lastResponse): self
     {
         $this->lastResponse = $lastResponse;
 
         return $this;
     }
 
-    /**
-     * Get lastResponse
-     *
-     * @return array
-     */
-    public function getLastResponse()
+    public function getLastResponse(): ?array
     {
         return $this->lastResponse;
     }
 
-    /**
-     * Add advert
-     *
-     * @param Advert $advert
-     *
-     * @return PushNotificationToken
-     */
-    public function addAdvert(Advert $advert)
+    public function addAdvert(Advert $advert): self
     {
         $this->adverts[] = $advert;
 
         return $this;
     }
 
-    /**
-     * Remove advert
-     *
-     * @param Advert $advert
-     */
-    public function removeAdvert(Advert $advert)
+    public function removeAdvert(Advert $advert): void
     {
         $this->adverts->removeElement($advert);
     }
 
-    /**
-     * Get adverts
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getAdverts()
+    public function getAdverts(): Collection
     {
         return $this->adverts;
     }
 
-    /**
-     * Set filters
-     *
-     * @param array $filters
-     *
-     * @return PushNotificationToken
-     */
-    public function setFilters($filters)
+    public function setFilters(?array $filters): self
     {
         $this->filters = $filters;
 
         return $this;
     }
 
-    /**
-     * Get filters
-     *
-     * @return array
-     */
-    public function getFilters()
+    public function getFilters(): ?array
     {
         return $this->filters;
     }
 
-    /**
-     * Set enabled
-     *
-     * @param boolean $enabled
-     *
-     * @return PushNotificationToken
-     */
-    public function setEnabled($enabled)
+    public function setEnabled(bool $enabled):  self
     {
         $this->enabled = $enabled;
 
         return $this;
     }
 
-    /**
-     * Get enabled
-     *
-     * @return boolean
-     */
-    public function getEnabled()
+    public function getEnabled(): bool
     {
         return $this->enabled;
     }

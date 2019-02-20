@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Command;
 
 use AppBundle\Entity\Region;
@@ -10,7 +12,7 @@ use AppBundle\Repository\CityRepository;
 use AppBundle\Repository\CityDistrictRepository;
 use AppBundle\Repository\DistrictRepository;
 use AppBundle\Repository\RegionRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,11 +22,11 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-class ImportRegistryCommand extends Command
+final class ImportRegistryCommand extends Command
 {
     protected static $defaultName = 'app:import:registry';
 
-    /** @var EntityManager */
+    /** @var EntityManagerInterface */
     protected $entityManager;
 
     /** @var FileLocator */
@@ -43,7 +45,7 @@ class ImportRegistryCommand extends Command
     protected $regionRepository;
 
     public function __construct(
-        EntityManager $entityManager,
+        EntityManagerInterface $entityManager,
         FileLocator $fileLocator,
         CityRepository $cityRepository,
         CityDistrictRepository $cityDistrictRepository,
@@ -60,14 +62,14 @@ class ImportRegistryCommand extends Command
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Import czech regions, districts and cities.')
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $serializer = new Serializer([new ObjectNormalizer()], [new CsvEncoder()]);
 
@@ -157,5 +159,7 @@ class ImportRegistryCommand extends Command
 
         $progressBar->finish();
         $output->writeln(' <info>✓</info>');
+
+        return 0;
     }
 }

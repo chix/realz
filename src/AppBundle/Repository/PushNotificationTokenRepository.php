@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Repository;
 
 use AppBundle\Entity\Advert;
@@ -8,7 +10,7 @@ use AppBundle\Entity\PushNotificationToken;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
 
-class PushNotificationTokenRepository extends ServiceEntityRepository
+final class PushNotificationTokenRepository extends ServiceEntityRepository
 {
     /**
      * @var CityRepository
@@ -25,17 +27,15 @@ class PushNotificationTokenRepository extends ServiceEntityRepository
     /**
      * @return PushNotificationToken[]
      */
-    public function getActiveAndEnabled()
+    public function getActiveAndEnabled(): array
     {
         return $this->findBy(['active' => 1, 'enabled' => 1]);
     }
 
     /**
-     * @param PushNotificationToken $token
-     * @param array|null $filters
      * @return Advert[]
      */
-    public function getUnnotifiedAdvertsForToken($token)
+    public function getUnnotifiedAdvertsForToken(PushNotificationToken $token): array
     {
         $oneHourAgo = (new \DateTime())->sub((new \DateInterval('PT1H')))->format('Y-m-d H:i:s');
         $ids = $this->createQueryBuilder('qb')

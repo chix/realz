@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
- * Location
- *
  * @ORM\Table(name="location")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\LocationRepository")
  *
@@ -30,7 +31,7 @@ class Location extends BaseEntity
     private $id;
 
     /**
-     * @var string
+     * @var string:null
      *
      * @ORM\Column(name="street", type="string", length=255, nullable=true)
      *
@@ -39,7 +40,7 @@ class Location extends BaseEntity
     private $street;
 
     /**
-     * @var City
+     * @var City|null
      *
      * @ORM\ManyToOne(targetEntity="City", inversedBy="locations")
      *
@@ -48,7 +49,7 @@ class Location extends BaseEntity
     private $city;
 
     /**
-     * @var CityDistrict
+     * @var CityDistrict|null
      *
      * @ORM\ManyToOne(targetEntity="CityDistrict", inversedBy="locations")
      *
@@ -63,126 +64,65 @@ class Location extends BaseEntity
      */
     private $properties;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->properties = new ArrayCollection();
     }
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set street
-     *
-     * @param string $street
-     *
-     * @return Location
-     */
-    public function setStreet($street)
+    public function setStreet(?string $street): self
     {
         $this->street = $street;
 
         return $this;
     }
 
-    /**
-     * Get street
-     *
-     * @return string
-     */
-    public function getStreet()
+    public function getStreet(): ?string
     {
         return $this->street;
     }
 
-    /**
-     * Set city
-     *
-     * @param City $city
-     *
-     * @return Location
-     */
-    public function setCity(City $city = null)
+    public function setCity(?City $city): self
     {
         $this->city = $city;
 
         return $this;
     }
 
-    /**
-     * Get city
-     *
-     * @return City
-     */
-    public function getCity()
+    public function getCity(): ?City
     {
         return $this->city;
     }
 
-    /**
-     * Add property
-     *
-     * @param Property $property
-     *
-     * @return Location
-     */
-    public function addProperty(Property $property)
+    public function addProperty(Property $property): self
     {
         $this->properties[] = $property;
 
         return $this;
     }
 
-    /**
-     * Remove property
-     *
-     * @param Property $property
-     */
-    public function removeProperty(Property $property)
+    public function removeProperty(Property $property): void
     {
         $this->properties->removeElement($property);
     }
 
-    /**
-     * Get properties
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getProperties()
+    public function getProperties(): Collection
     {
         return $this->properties;
     }
 
-    /**
-     * Set cityDistrict
-     *
-     * @param CityDistrict $cityDistrict
-     *
-     * @return Location
-     */
-    public function setCityDistrict(CityDistrict $cityDistrict = null)
+    public function setCityDistrict(?CityDistrict $cityDistrict): self
     {
         $this->cityDistrict = $cityDistrict;
 
         return $this;
     }
 
-    /**
-     * Get cityDistrict
-     *
-     * @return CityDistrict
-     */
-    public function getCityDistrict()
+    public function getCityDistrict(): ?CityDistrict
     {
         return $this->cityDistrict;
     }

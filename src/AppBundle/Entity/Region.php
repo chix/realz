@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AppBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * Region
- *
  * @ORM\Table(name="region")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\RegionRepository")
  *
@@ -55,102 +56,53 @@ class Region extends BaseEntity
      */
     private $districts;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->districts = new ArrayCollection();
     }
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return Region
-     */
-    public function setName($name)
+    public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * Add district
-     *
-     * @param District $district
-     *
-     * @return Region
-     */
-    public function addDistrict(District $district)
+    public function addDistrict(District $district): self
     {
         $this->districts[] = $district;
 
         return $this;
     }
 
-    /**
-     * Remove district
-     *
-     * @param District $district
-     */
-    public function removeDistrict(District $district)
+    public function removeDistrict(District $district): void
     {
         $this->districts->removeElement($district);
     }
 
-    /**
-     * Get districts
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getDistricts()
+    public function getDistricts(): Collection
     {
         return $this->districts;
     }
 
-    /**
-     * Set code
-     *
-     * @param string $code
-     *
-     * @return Region
-     */
-    public function setCode($code)
+    public function setCode(string $code): self
     {
         $this->code = $code;
 
         return $this;
     }
 
-    /**
-     * Get code
-     *
-     * @return string
-     */
-    public function getCode()
+    public function getCode(): string
     {
         return $this->code;
     }
