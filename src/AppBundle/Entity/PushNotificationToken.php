@@ -9,7 +9,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation as Serializer;
-use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Table(name="push_notification_token", indexes={@ORM\Index(name="token_idx", columns={"token"})})
@@ -35,8 +34,6 @@ class PushNotificationToken extends BaseEntity
      *
      * @ORM\Column(name="token", type="string", length=255)
      *
-     * @Assert\NotBlank()
-     *
      * @Serializer\Expose
      */
     private $token;
@@ -58,7 +55,7 @@ class PushNotificationToken extends BaseEntity
     private $errorCount;
 
     /**
-     * @var string[]|null $lastResponse
+     * @var array|null $lastResponse
      *
      * @ORM\Column(name="last_response", type="json_array", nullable=true)
      */
@@ -74,7 +71,7 @@ class PushNotificationToken extends BaseEntity
     private $enabled;
 
     /**
-     * @var string[]|null $filters
+     * @var array|null $filters
      *
      * @ORM\Column(name="filters", type="json_array", nullable=true)
      */

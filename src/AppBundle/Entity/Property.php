@@ -154,7 +154,7 @@ class Property extends BaseEntity
     private $adverts;
 
     /**
-     * @var string[]|null $images
+     * @var array|null $images
      *
      * @ORM\Column(name="images", type="json_array", nullable=true)
      *

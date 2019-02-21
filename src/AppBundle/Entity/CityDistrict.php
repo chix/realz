@@ -64,7 +64,7 @@ class CityDistrict
     private $locations;
 
     /**
-     * @var string[]|null $queries
+     * @var array|null $queries
      *
      * @ORM\Column(name="queries", type="json_array", nullable=true)
      */
