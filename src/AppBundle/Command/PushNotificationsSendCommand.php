@@ -89,7 +89,8 @@ final class PushNotificationsSendCommand extends Command
                 $notification->sound = 'default';
                 $notification->vibrate = true;
                 $notification->to = $activeToken->getToken();
-                $notification->title = $advert->getTitle();
+                $source = $advert->getSource();
+                $notification->title = $advert->getTitle() . ($source ? sprintf(' (%s)', $source->getName()) : '');
                 $bodyParts = [];
                 if ($advert->getPrice()) {
                     $bodyParts[] = $advert->getPrice() . $advert->getCurrency();
