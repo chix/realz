@@ -57,7 +57,7 @@ class CityDistrict
     private $city;
 
     /**
-     * @var Location[]
+     * @var ArrayCollection<Location>
      *
      * @ORM\OneToMany(targetEntity="Location", mappedBy="cityDistrict")
      */

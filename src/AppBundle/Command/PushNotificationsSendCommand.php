@@ -79,7 +79,7 @@ final class PushNotificationsSendCommand extends Command
         $advertMap = [];
         $notifications = [];
         $activeTokens = $this->tokenRepository->getActiveAndEnabled();
-        foreach ($activeTokens as $activeToken) { /* @var $activeToken PushNotificationToken */
+        foreach ($activeTokens as $activeToken) {
             $adverts = $this->tokenRepository->getUnnotifiedAdvertsForToken($activeToken);
             foreach ($adverts as $advert) {
                 $notification = new \stdClass();
@@ -95,7 +95,7 @@ final class PushNotificationsSendCommand extends Command
                 if ($advert->getPrice()) {
                     $bodyParts[] = $advert->getPrice() . $advert->getCurrency();
                 }
-                if ($advert->getProperty() && $advert->getProperty()->getLocation()) {
+                if ($advert->getProperty() !== null && $advert->getProperty()->getLocation() !== null) {
                     $bodyParts[] = $advert->getProperty()->getLocation()->getStreet();
                 }
                 $notification->body = implode(', ', $bodyParts);
@@ -114,7 +114,7 @@ final class PushNotificationsSendCommand extends Command
         }
 
         //send notifications and mark adverts as already notified (or log delivery error)
-        $json = $serializer->encode($notifications, 'json');
+        $json = (string)$serializer->encode($notifications, 'json');
         try {
             $curlOptions = [
                 CURLOPT_HTTPHEADER => [
@@ -126,17 +126,23 @@ final class PushNotificationsSendCommand extends Command
             $response = $this->restClient->post($this->expoBackendUrl, $json, $curlOptions);
             $isGzip = 0 === mb_strpos($response->getContent(), "\x1f" . "\x8b" . "\x08");
             $responseContent = ($isGzip) ? gzdecode($response->getContent()) : $response->getContent();
-            $responseJson = $serializer->decode($responseContent, 'json');
+            $responseJson = [];
+            if ($responseContent !== false) {
+                $responseJson = $serializer->decode($responseContent, 'json');
+            }
 
             // store response meta data
             if (!empty($responseJson['data'])) {
                 foreach ($responseJson['data'] as $i => $responseData) {
-                    /* @var $token PushNotificationToken */
+                    /** @var PushNotificationToken $token */
                     $token = $tokenMap[$notifications[$i]->to];
-                    /* @var $advert Advert */
+                    /** @var Advert $advert */
                     $advert = $advertMap[$notifications[$i]->data->id];
 
-                    $this->logger->debug('Notification sent to ' . $token->getToken(), json_decode(json_encode($notifications[$i]), true));
+                    $this->logger->debug(
+                        'Notification sent to ' . $token->getToken(),
+                        json_decode((string)json_encode($notifications[$i]), true)
+                    );
 
                     if ($responseData['status'] === 'error') {
                         $this->logger->debug('Incrementing error count on ' . $token->getToken(), $responseData);
@@ -146,7 +152,7 @@ final class PushNotificationsSendCommand extends Command
                     }
                     if ($token->getErrorCount() >= 10) {
                         $this->logger->debug('Deactivating ' . $token->getToken());
-                        $token->setActive(0);
+                        $token->setActive(false);
                     }
                     $token->setLastResponse($responseData);
                     $this->entityManager->persist($token);

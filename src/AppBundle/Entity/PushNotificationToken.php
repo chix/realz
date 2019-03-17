@@ -78,7 +78,7 @@ class PushNotificationToken extends BaseEntity
     private $filters;
 
     /**
-     * @var Advert[]
+     * @var ArrayCollection<Advert>
      * @ORM\ManyToMany(targetEntity="Advert")
      * @ORM\JoinTable(name="push_notification_tokens_adverts",
      *      joinColumns={@ORM\JoinColumn(name="push_notification_token_id", referencedColumnName="id")},

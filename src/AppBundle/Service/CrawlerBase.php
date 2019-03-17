@@ -211,7 +211,7 @@ abstract class CrawlerBase
         if (count($floorMatches) > 1) {
             $property->setFloor(intval($floorMatches[1]));
         } elseif (stristr($fulltext, 'suterén')) {
-            $property->getFloor(0);
+            $property->setFloor(0);
         }
 
         return $property;
@@ -226,7 +226,7 @@ abstract class CrawlerBase
         curl_setopt($ch, CURLOPT_HEADER, 0);
         $content = curl_exec($ch);
         curl_close($ch);
-        return $content ?: null;
+        return is_string($content) ? $content : null;
     }
 
     protected function normalizeHtmlString(string $html): string

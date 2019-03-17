@@ -98,7 +98,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $this->logger->debug('Could not load list URL: ' . $listUrl . ' ' .$e->getMessage());
                 continue;
             }
-            if (!$listDom) {
+            if (empty($listDom)) {
                 $this->logger->debug('Could not load list URL: ' . $listUrl);
                 continue;
             }
@@ -133,7 +133,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl . ' ' . $e->getMessage());
                     continue;
                 }
-                if (!$detailDom) {
+                if (empty($detailDom)) {
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl);
                     continue;
                 }
@@ -144,11 +144,10 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 $mainNode = $mainNodeChild->parent();
 
+                $description = $streetNode = $street = $zipCode = $priceNode = $latitude = $longitude = null;
                 $property = $this->propertyRepository->findProperty();
                 if ($property !== null) {
                 } else {
-                    $description = $streetNode = $street = $zipCode = $priceNode = $latitude = $longitude = null;
-
                     $descriptionNode = $mainNode->find('div.popis', 0);
                     if ($descriptionNode) {
                         $description = $this->normalizeHtmlString($descriptionNode->innertext);
@@ -175,9 +174,12 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                         if ($streetHrefNode) {
                             $street = trim($streetHrefNode->innertext);
                             $zipCode = str_replace(' ', '', substr($street, 0, 6));
+                            $mapUrlPathParts = [];
                             $mapHref = $streetHrefNode->href;
-                            $mapUrl = parse_url($mapHref);
-                            $mapUrlPathParts = explode('/', $mapUrl['path']);
+                            $mapUrlParts = parse_url($mapHref);
+                            if ($mapUrlParts !== false && isset($mapUrlParts['path'])) {
+                                $mapUrlPathParts = explode('/', $mapUrlParts['path']);
+                            }
                             if (isset($mapUrlPathParts[3])) {
                                 $gps = explode(',', $mapUrlPathParts[3]);
                                 $latitude = floatval($gps[0]);
@@ -254,7 +256,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
         ];
         $url = $this->getSourceUrl().vsprintf('/%s/%s/?hlokalita=%s&humkreis=%s', array_values($parameters));
         if ($page > 1) {
-            $url = str_replace('/?', sprintf('/%d/?', ($page - 1) * $limit));
+            $url = str_replace('/?', sprintf('/%d/?', ($page - 1) * $limit), $url);
         }
         return $url;
     }

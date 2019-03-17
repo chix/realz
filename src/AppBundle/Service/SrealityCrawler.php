@@ -104,7 +104,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         $page = 1;
         $limit = 60;
         $listUrl = $this->constructListUrl($page, $limit);
-        $json = json_decode(file_get_contents($listUrl), true);
+        $json = json_decode((string)file_get_contents($listUrl), true);
         if (empty($json)) {
             $this->logger->debug('Could not load list URL: ' . $listUrl);
             exit;
@@ -118,7 +118,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         $adverts = [];
         foreach ($pages as $page) {
             $listUrl = $this->constructListUrl($page, $limit);
-            $list = json_decode(file_get_contents($listUrl), true);
+            $list = json_decode((string)file_get_contents($listUrl), true);
             if (empty($list)) {
                 $this->logger->debug('Could not load list URL: ' . $listUrl);
                 continue;
@@ -134,7 +134,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                $adDetail = json_decode(file_get_contents($detailUrl), true);
+                $adDetail = json_decode((string)file_get_contents($detailUrl), true);
                 if (empty($adDetail)) {
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl, [$ad['hash_id']]);
                     continue;
@@ -232,7 +232,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setExternalUrl($this->constructExternalUrl(
                     $ad['hash_id'],
                     'byt',
-                    $property->getDisposition()->getCode(),
+                    ($property->getDisposition() !== null) ? $property->getDisposition()->getCode() : $dispositionMap[16],
                     $adDetail['seo']['locality']
                 ));
                 $advert->setProperty($property);
@@ -281,6 +281,9 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
     protected function constructExternalUrl(int $id, string $type, string $subtype, string $locality): string
     {
         $urlParts = parse_url($this->getSourceUrl());
+        if ($urlParts === false || !isset($urlParts['scheme']) || !isset($urlParts['host'])) {
+            return $this->getSourceUrl();
+        }
         $url = vsprintf('%s://%s/detail/prodej/%s/%s/%s/%d', [
             $urlParts['scheme'],
             $urlParts['host'],

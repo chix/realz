@@ -79,7 +79,7 @@ final class PushNotificationsTestCommand extends Command
             $messageTmp->title = 'Notification ' . $i;
             $data[] = $messageTmp;
         }
-        $json = $serializer->encode($data, 'json');
+        $json = (string)$serializer->encode($data, 'json');
 
         try {
             $curlOptions = [

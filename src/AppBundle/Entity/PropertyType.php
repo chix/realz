@@ -54,7 +54,7 @@ class PropertyType extends BaseEntity
     private $code;
 
     /**
-     * @var Property[]
+     * @var ArrayCollection<Property>
      *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="type")
      */

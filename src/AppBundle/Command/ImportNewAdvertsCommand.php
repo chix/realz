@@ -77,6 +77,7 @@ final class ImportNewAdvertsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $crawlers = [];
+        /** @var string[] $crawlersInput */
         $crawlersInput = $input->getOption('crawlers');
         foreach ($crawlersInput as $code) {
             if (in_array($code, self::$activeCrawlers)) {
@@ -87,14 +88,14 @@ final class ImportNewAdvertsCommand extends Command
         }
         if (empty($crawlers)) {
             if (!empty($crawlersInput)) {
-                $output->writeln(sprintf('<comment>Loading all crawlers.</comment>', $code));
+                $output->writeln('<comment>Loading all crawlers.</comment>');
             }
             $crawlers[] = $this->bazosCrawler;
             $crawlers[] = $this->bezrealitkyCrawler;
             $crawlers[] = $this->srealityCrawler;
         }
 
-        foreach ($crawlers as $crawler) { /* @var $crawler CrawlerInterface */
+        foreach ($crawlers as $crawler) { /** @var CrawlerInterface $crawler */
             $this->logger->debug('Starting ' . $crawler->getIdentifier());
 
             $adverts = $crawler->getNewAdverts();

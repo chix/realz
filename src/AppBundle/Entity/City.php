@@ -43,7 +43,7 @@ class City extends BaseEntity
     private $name;
 
     /**
-     * @var string|null
+     * @var string
      *
      * @ORM\Column(name="code", type="string", length=255, unique=true)
      *
@@ -61,14 +61,14 @@ class City extends BaseEntity
     private $district;
 
     /**
-     * @var CityDistrict[]
+     * @var ArrayCollection<CityDistrict>
      *
      * @ORM\OneToMany(targetEntity="CityDistrict", mappedBy="city")
      */
     private $cityDistricts;
 
     /**
-     * @var Location[]
+     * @var ArrayCollection<Location>
      *
      * @ORM\OneToMany(targetEntity="Location", mappedBy="city")
      */

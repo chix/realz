@@ -54,7 +54,7 @@ class Source extends BaseEntity
     private $code;
 
     /**
-     * @var Advert[]
+     * @var ArrayCollection<Advert>
      *
      * @ORM\OneToMany(targetEntity="Advert", mappedBy="source")
      */

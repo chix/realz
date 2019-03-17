@@ -73,10 +73,12 @@ final class ImportRegistryCommand extends Command
     {
         $serializer = new Serializer([new ObjectNormalizer()], [new CsvEncoder()]);
 
+        /** @var string $path */
         $path = $this->fileLocator->locate('@AppBundle/Resources/data/registry.csv');
-        $data = $serializer->decode(file_get_contents($path), 'csv');
+        $data = $serializer->decode((string)file_get_contents($path), 'csv');
+        /** @var string $pathCityDistricts */
         $pathCityDistricts = $this->fileLocator->locate('@AppBundle/Resources/data/registry_city_districts.csv');
-        $dataCityDistricts = $serializer->decode(file_get_contents($pathCityDistricts), 'csv');
+        $dataCityDistricts = $serializer->decode((string)file_get_contents($pathCityDistricts), 'csv');
 
         $max = count($data) + count($dataCityDistricts);
         $batchSize = 25;

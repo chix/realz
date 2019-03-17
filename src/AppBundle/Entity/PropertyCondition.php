@@ -58,7 +58,7 @@ class PropertyCondition extends BaseEntity
     private $code;
 
     /**
-     * @var Property[]
+     * @var ArrayCollection<Property>
      *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="condition")
      */

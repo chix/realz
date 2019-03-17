@@ -122,7 +122,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $this->logger->debug('Could not load list URL: ' . $listUrl . ' ' .$e->getMessage());
                 continue;
             }
-            if (!$listDom) {
+            if (empty($listDom)) {
                 $this->logger->debug('Could not load list URL: ' . $listUrl);
                 continue;
             }
@@ -146,7 +146,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl . ' ' . $e->getMessage());
                     continue;
                 }
-                if (!$detailDom) {
+                if (empty($detailDom)) {
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl);
                     continue;
                 }
@@ -156,11 +156,11 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
+                $cityDistrict = '';
                 $property = $this->propertyRepository->findProperty();
                 if ($property !== null) {
                 } else {
                     $street = $latitude = $longitude = null;
-                    $cityDistrict = '';
                     
                     $streetNode = $mainNode->find('div.heading .heading__perex', 0);
                     if ($streetNode) {
@@ -168,10 +168,12 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     }
                     $mapIframeNode = $mainNode->find('div#map iframe', 0);
                     if ($mapIframeNode) {
-                        $iframeSrc = $mapIframeNode->src;
-                        $iframeUrl = parse_url($iframeSrc);
                         $iframeUrlQuery = [];
-                        parse_str($iframeUrl['query'], $iframeUrlQuery);
+                        $iframeSrc = $mapIframeNode->src;
+                        $iframeUrlParts = parse_url($iframeSrc);
+                        if ($iframeUrlParts !== false && isset($iframeUrlParts['query'])) {
+                            parse_str($iframeUrlParts['query'], $iframeUrlQuery);
+                        }
                         if (isset($iframeUrlQuery['q'])) {
                             $gps = explode(',', $iframeUrlQuery['q']);
                             $latitude = floatval($gps[0]);
@@ -241,7 +243,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $images = [];
                     $imageHrefNodes = (array)$mainNode->find('div.main__container div.carousel div.carousel__list a');
                     foreach ($imageHrefNodes as $imageHrefNode) {
-                        if (mb_stristr($imageHrefNode->class, 'gallery-ad-img')) {
+                        if ($imageHrefNode->class && mb_stristr($imageHrefNode->class, 'gallery-ad-img')) {
                             continue;
                         }
                         $imageNode = $imageHrefNode->find('img', 0);

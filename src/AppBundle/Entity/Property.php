@@ -147,7 +147,7 @@ class Property extends BaseEntity
     private $location;
 
     /**
-     * @var Advert[]
+     * @var ArrayCollection<Advert>
      *
      * @ORM\OneToMany(targetEntity="Advert", mappedBy="property")
      */

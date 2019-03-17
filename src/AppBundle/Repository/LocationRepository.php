@@ -18,12 +18,15 @@ final class LocationRepository extends ServiceEntityRepository
 
     public function findLocation(City $city, ?string $street, ?float $latitude, ?float $longitude): ?Location
     {
-        return $this->findOneBy([
+        /** @var Location|null $location */
+        $location = $this->findOneBy([
             'city' => $city,
             'street' => $street,
             'latitude' => $latitude,
             'longitude' => $longitude,
             'deletedAt' => null,
         ]);
+
+        return $location;
     }
 }

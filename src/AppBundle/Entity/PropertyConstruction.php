@@ -53,7 +53,7 @@ class PropertyConstruction extends BaseEntity
     private $code;
 
     /**
-     * @var Property[]
+     * @var ArrayCollection<Property>
      *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="construction")
      */

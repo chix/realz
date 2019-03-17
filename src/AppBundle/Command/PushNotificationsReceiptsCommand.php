@@ -59,7 +59,7 @@ final class PushNotificationsReceiptsCommand extends Command
 
         $message = new \stdClass();
         $message->ids = [$id];
-        $json = $serializer->encode($message, 'json');
+        $json = (string)$serializer->encode($message, 'json');
 
         try {
             $curlOptions = [

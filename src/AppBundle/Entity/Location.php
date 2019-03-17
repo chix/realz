@@ -31,7 +31,7 @@ class Location extends BaseEntity
     private $id;
 
     /**
-     * @var string:null
+     * @var string|null
      *
      * @ORM\Column(name="street", type="string", length=255, nullable=true)
      *
@@ -58,7 +58,7 @@ class Location extends BaseEntity
     private $cityDistrict;
 
     /**
-     * @var Property[]
+     * @var ArrayCollection<Property>
      *
      * @ORM\OneToMany(targetEntity="Property", mappedBy="location")
      */

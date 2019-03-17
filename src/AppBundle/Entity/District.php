@@ -59,7 +59,7 @@ class District extends BaseEntity
     private $region;
 
     /**
-     * @var City[]
+     * @var ArrayCollection<City>
      *
      * @ORM\OneToMany(targetEntity="City", mappedBy="district")
      */

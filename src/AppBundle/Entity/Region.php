@@ -50,7 +50,7 @@ class Region extends BaseEntity
     private $code;
 
     /**
-     * @var District[]
+     * @var ArrayCollection<District>
      *
      * @ORM\OneToMany(targetEntity="District", mappedBy="region")
      */
