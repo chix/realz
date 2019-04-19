@@ -51,6 +51,7 @@ final class PushNotificationTokenData
 
         $entity->setActive(true);
         $entity->setErrorCount(0);
+        $entity->setToken($this->token);
         $entity->setEnabled($this->enabled);
         $entity->setFilters($this->sanitizeFilters($filters));
 
