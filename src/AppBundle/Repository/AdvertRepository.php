@@ -20,7 +20,7 @@ final class AdvertRepository extends ServiceEntityRepository
      */
     public function getLatestAdverts(string $type, int $limit = 20): array
     {
-        $qb = $this->createQueryBuilder('qb')
+        $qb = $this->getEntityManager()->createQueryBuilder()
             ->select('a')
             ->from('AppBundle:Advert', 'a')
             ->leftJoin('a.type', 'at')
@@ -28,7 +28,7 @@ final class AdvertRepository extends ServiceEntityRepository
             ->andWhere('a.deletedAt IS NULL')
             ->andWhere('at.code = :advertTypeCode')
             ->setParameter('advertTypeCode', $type)
-            ->orderBy('a.updatedAt', 'DESC')
+            ->orderBy('a.id', 'DESC')
             ->setFirstResult(0)
             ->setMaxResults($limit);
         return $qb->getQuery()->getResult();
