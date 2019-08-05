@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
+use AppBundle\Entity\AdvertType;
 use AppBundle\Entity\Location;
 use AppBundle\Entity\Property;
 use AppBundle\Entity\PropertyConstruction;
@@ -12,6 +13,7 @@ use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Entity\PropertyType;
 use AppBundle\Entity\Source;
 use AppBundle\Repository\AdvertRepository;
+use AppBundle\Repository\AdvertTypeRepository;
 use AppBundle\Repository\CityRepository;
 use AppBundle\Repository\LocationRepository;
 use AppBundle\Repository\PropertyRepository;
@@ -26,6 +28,9 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 {
     /** @var AdvertRepository */
     protected $advertRepository;
+
+    /** @var AdvertTypeRepository */
+    protected $advertTypeRepository;
 
     /** @var CityRepository */
     protected $cityRepository;
@@ -48,6 +53,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
     public function __construct(
         EntityManagerInterface $entityManager,
         LoggerInterface $logger,
+        AdvertTypeRepository $advertTypeRepository,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
         string $sourceUrl,
@@ -62,23 +68,27 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         $this->cityRepository = $cityRepository;
         $this->locationRepository = $locationRepository;
         $this->propertyRepository = $propertyRepository;
-        $this->propertyTypeRepository = $propertyTypeRepository;
         $this->sourceRepository = $sourceRepository;
 
-        parent::__construct($entityManager, $logger, $propertyConstructionRepository, $propertyDispositionRepository, $sourceUrl);
+        parent::__construct(
+            $entityManager,
+            $logger,
+            $advertTypeRepository,
+            $propertyConstructionRepository,
+            $propertyDispositionRepository,
+            $propertyTypeRepository,
+            $sourceUrl
+        );
     }
 
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(): array
+    public function getNewAdverts(string $advertType, string $propertyType): array
     {
         $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
-        $typeMap = [
-            1 => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
-            2 => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
-            3 => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
-        ];
+        $advertTypeMap = $this->getAdvertTypeMap();
+        $propertyTypeMap = $this->getPropertyTypeMap();
         $brno = $this->cityRepository->findOneByName('Brno');
         $dispositionMap = [
             1 => PropertyDisposition::DISPOSITION_1,
@@ -103,7 +113,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 
         $page = 1;
         $limit = 60;
-        $listUrl = $this->constructListUrl($page, $limit);
+        $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType);
         $json = json_decode((string)file_get_contents($listUrl), true);
         if (empty($json)) {
             $this->logger->debug('Could not load list URL: ' . $listUrl);
@@ -117,7 +127,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 
         $adverts = [];
         foreach ($pages as $page) {
-            $listUrl = $this->constructListUrl($page, $limit);
+            $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType);
             $list = json_decode((string)file_get_contents($listUrl), true);
             if (empty($list)) {
                 $this->logger->debug('Could not load list URL: ' . $listUrl);
@@ -161,7 +171,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     }
 
                     $property = new Property();
-                    $property->setType($typeMap[$adDetail['seo']['category_main_cb']]);
+                    $property->setType($propertyTypeMap[$propertyType]);
                     if (isset($dispositionMap[$adDetail['seo']['category_sub_cb']])) {
                         $property->setDisposition($dispositionMap[$adDetail['seo']['category_sub_cb']]);
                     } else {
@@ -227,6 +237,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $advert = new Advert();
+                $advert->setType($advertTypeMap[$advertType]);
                 $advert->setSource($srealitySource);
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($this->constructExternalUrl(
@@ -256,11 +267,20 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page, int $limit): string
+    protected function constructListUrl(int $page, int $limit, string $advertType, string $propertyType): string
     {
+        $advertTypeParamMap = [
+            AdvertType::TYPE_SALE => 1,
+            AdvertType::TYPE_RENT => 2,
+        ];
+        $propertyTypeParamMap = [
+            PropertyType::TYPE_FLAT => 1,
+            PropertyType::TYPE_HOUSE => 2,
+            PropertyType::TYPE_LAND => 3,
+        ];
         $parameters = [
-            'category_main_cb' => 1,
-            'category_type_cb' => 1,
+            'category_main_cb' => $propertyTypeParamMap[$propertyType],
+            'category_type_cb' => $advertTypeParamMap[$advertType],
             'locality_region_id' => 14,
             'locality_district_id' => 72,
             'per_page' => $limit,

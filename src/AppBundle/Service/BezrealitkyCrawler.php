@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
+use AppBundle\Entity\AdvertType;
 use AppBundle\Entity\Location;
 use AppBundle\Entity\Property;
 use AppBundle\Entity\PropertyConstruction;
@@ -12,6 +13,7 @@ use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Entity\PropertyType;
 use AppBundle\Entity\Source;
 use AppBundle\Repository\AdvertRepository;
+use AppBundle\Repository\AdvertTypeRepository;
 use AppBundle\Repository\CityRepository;
 use AppBundle\Repository\LocationRepository;
 use AppBundle\Repository\PropertyRepository;
@@ -27,6 +29,9 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
 {
     /** @var AdvertRepository */
     protected $advertRepository;
+
+    /** @var AdvertTypeRepository */
+    protected $advertTypeRepository;
 
     /** @var CityRepository */
     protected $cityRepository;
@@ -49,38 +54,42 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
     public function __construct(
         EntityManagerInterface $entityManager,
         LoggerInterface $logger,
+        AdvertTypeRepository $advertTypeRepository,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
+        PropertyTypeRepository $propertyTypeRepository,
         string $sourceUrl,
         AdvertRepository $advertRepository,
         CityRepository $cityRepository,
         LocationRepository $locationRepository,
         PropertyRepository $propertyRepository,
-        PropertyTypeRepository $propertyTypeRepository,
         SourceRepository $sourceRepository
     ) {
         $this->advertRepository = $advertRepository;
         $this->cityRepository = $cityRepository;
         $this->locationRepository = $locationRepository;
         $this->propertyRepository = $propertyRepository;
-        $this->propertyTypeRepository = $propertyTypeRepository;
         $this->sourceRepository = $sourceRepository;
 
-        parent::__construct($entityManager, $logger, $propertyConstructionRepository, $propertyDispositionRepository, $sourceUrl);
+        parent::__construct(
+            $entityManager,
+            $logger,
+            $advertTypeRepository,
+            $propertyConstructionRepository,
+            $propertyDispositionRepository,
+            $propertyTypeRepository,
+            $sourceUrl
+        );
     }
 
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(): array
+    public function getNewAdverts(string $advertType, string $propertyType): array
     {
         $bezrealitkySource = $this->sourceRepository->findOneByCode(Source::SOURCE_BEZREALITKY);
-        $typeMap = [
-            'byt' => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
-            'dum' => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
-            'pozemek' => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
-        ];
-        $flatType = 'byt';
+        $advertTypeMap = $this->getAdvertTypeMap();
+        $propertyTypeMap = $this->getPropertyTypeMap();
         $brno = $this->cityRepository->findOneByName('Brno');
         $dispositionMap = [
             'Garsoniéra' => PropertyDisposition::DISPOSITION_1,
@@ -115,7 +124,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
 
         $adverts = [];
         foreach ($pages as $page) {
-            $listUrl = $this->constructListUrl($page, $flatType);
+            $listUrl = $this->constructListUrl($page, $advertType, $propertyType);
             try {
                 $listDom = HtmlDomParser::str_get_html($this->curlGetContent($listUrl));
             } catch (\Exception $e) {
@@ -190,7 +199,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     }
 
                     $property = new Property();
-                    $property->setType($typeMap[$flatType]);
+                    $property->setType($propertyTypeMap[$propertyType]);
                     $property->setLocation($location);
                     $itemNodes = (array)$mainNode->find('div.main__container div.b-desc table.table tbody tr');
                     foreach ($itemNodes as $itemNode) {
@@ -259,6 +268,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $advert = new Advert();
+                $advert->setType($advertTypeMap[$advertType]);
                 $advert->setSource($bezrealitkySource);
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
@@ -285,11 +295,20 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page = 1, string $propertyType = 'byt'): string
+    protected function constructListUrl(int $page = 1, string $advertType, string $propertyType): string
     {
+        $advertTypeParamMap = [
+            AdvertType::TYPE_SALE => 'prodej',
+            AdvertType::TYPE_RENT => 'pronajem',
+        ];
+        $propertyTypeParamMap = [
+            PropertyType::TYPE_FLAT => 'byt',
+            PropertyType::TYPE_HOUSE => 'dum',
+            PropertyType::TYPE_LAND => 'pozemek',
+        ];
         $parameters = [
-            'ad_type' => 'nabidka-prodej',
-            'property_type' => $propertyType,
+            'ad_type' => 'nabidka-' . $advertTypeParamMap[$advertType],
+            'property_type' => $propertyTypeParamMap[$propertyType],
             'region' => 'jihomoravsky-kraj',
             'disctrict' => 'okres-brno-mesto',
         ];

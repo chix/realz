@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
+use AppBundle\Entity\AdvertType;
 use AppBundle\Entity\CityDistrict;
 use AppBundle\Entity\Property;
 use AppBundle\Entity\PropertyConstruction;
 use AppBundle\Entity\PropertyDisposition;
+use AppBundle\Entity\PropertyType;
+use AppBundle\Repository\AdvertTypeRepository;
 use AppBundle\Repository\PropertyConstructionRepository;
 use AppBundle\Repository\PropertyDispositionRepository;
+use AppBundle\Repository\PropertyTypeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -22,11 +26,17 @@ abstract class CrawlerBase
     /** @var LoggerInterface */
     protected $logger;
 
+    /** @var AdvertTypeRepository */
+    protected $advertTypeRepository;
+
     /** @var PropertyConstructionRepository */
     protected $propertyConstructionRepository;
 
     /** @var PropertyDispositionRepository */
     protected $propertyDispositionRepository;
+
+    /** @var PropertyTypeRepository */
+    protected $propertyTypeRepository;
 
     /** @var string */
     protected $sourceUrl;
@@ -34,14 +44,18 @@ abstract class CrawlerBase
     public function __construct(
         EntityManagerInterface $entityManager,
         LoggerInterface $logger,
+        AdvertTypeRepository $advertTypeRepository,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
+        PropertyTypeRepository $propertyTypeRepository,
         string $sourceUrl
     ) {
         $this->entityManager = $entityManager;
         $this->logger = $logger;
+        $this->advertTypeRepository = $advertTypeRepository;
         $this->propertyConstructionRepository = $propertyConstructionRepository;
         $this->propertyDispositionRepository = $propertyDispositionRepository;
+        $this->propertyTypeRepository = $propertyTypeRepository;
         $this->sourceUrl = $sourceUrl;
     }
 
@@ -53,6 +67,29 @@ abstract class CrawlerBase
     public function getIdentifier(): string
     {
         return (new \ReflectionClass($this))->getShortName();
+    }
+
+    /**
+     * @return PropertyType[]
+     */
+    protected function getPropertyTypeMap(): array
+    {
+        return [
+            PropertyType::TYPE_FLAT => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
+            PropertyType::TYPE_HOUSE => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
+            PropertyType::TYPE_LAND => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
+        ];
+    }
+
+    /**
+     * @return AdvertType[]
+     */
+    protected function getAdvertTypeMap(): array
+    {
+        return [
+            AdvertType::TYPE_SALE => $this->advertTypeRepository->findOneByCode(AdvertType::TYPE_SALE),
+            AdvertType::TYPE_RENT => $this->advertTypeRepository->findOneByCode(AdvertType::TYPE_RENT),
+        ];
     }
 
     protected function assignCityDistrict(Advert $advert, string $cityDistrictString = ''): ?CityDistrict
@@ -88,7 +125,7 @@ abstract class CrawlerBase
     /**
      * @param CityDistrict[] $cityDistricts
      */
-    private function findMatchingCityDistrict(array $cityDistricts, string $title, ?string $description = null): ?CityDistrict//TODO test
+    private function findMatchingCityDistrict(array $cityDistricts, string $title, ?string $description = null): ?CityDistrict
     {
         // search title
         foreach ($cityDistricts as $cityDistrict) {

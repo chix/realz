@@ -9,7 +9,7 @@ use JMS\Serializer\Annotation as Serializer;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * @ORM\Table(name="advert")
+ * @ORM\Table(name="advert", indexes={@ORM\Index(name="updated_at_idx", columns={"updated_at"})})
  * @ORM\Entity(repositoryClass="AppBundle\Repository\AdvertRepository")
  *
  * @Serializer\ExclusionPolicy("all")
@@ -28,6 +28,15 @@ class Advert extends BaseEntity
      * @Serializer\Expose
      */
     private $id;
+
+    /**
+     * @var AdvertType|null
+     *
+     * @ORM\ManyToOne(targetEntity="AdvertType", inversedBy="adverts")
+     *
+     * @Serializer\Expose
+     */
+    private $type;
 
     /**
      * @var string
@@ -104,6 +113,18 @@ class Advert extends BaseEntity
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function setType(?AdvertType $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getType(): ?AdvertType
+    {
+        return $this->type;
     }
 
     public function setTitle(string $title): self

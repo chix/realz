@@ -16,11 +16,11 @@ final class ApiController extends AbstractController
 {
 
     /**
-     * @Annotations\Get("/adverts")
+     * @Annotations\Get("/adverts/{type}", requirements={"type"="sale|rent"}, defaults={"type"="sale"})
      */
-    public function getAdvertsAction(AdvertRepository $advertRepository): array
+    public function getAdvertsAction(AdvertRepository $advertRepository, $type): array
     {
-        return $advertRepository->getLatestAdverts();
+        return $advertRepository->getLatestAdverts((string)$type);
     }
 
     /**

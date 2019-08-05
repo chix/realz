@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AppBundle\Command;
 
+use AppBundle\Entity\AdvertType;
+use AppBundle\Entity\PropertyType;
 use AppBundle\Service\CrawlerInterface;
 use AppBundle\Service\BazosCrawler;
 use AppBundle\Service\BezrealitkyCrawler;
@@ -98,7 +100,8 @@ final class ImportNewAdvertsCommand extends Command
         foreach ($crawlers as $crawler) { /** @var CrawlerInterface $crawler */
             $this->logger->debug('Starting ' . $crawler->getIdentifier());
 
-            $adverts = $crawler->getNewAdverts();
+            $adverts = $crawler->getNewAdverts(AdvertType::TYPE_SALE, PropertyType::TYPE_FLAT);
+            $adverts = $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT);
 
             $this->logger->debug(count($adverts) . ' new ads found');
 

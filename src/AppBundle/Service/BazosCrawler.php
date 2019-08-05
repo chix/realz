@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace AppBundle\Service;
 
 use AppBundle\Entity\Advert;
+use AppBundle\Entity\AdvertType;
 use AppBundle\Entity\Location;
 use AppBundle\Entity\Property;
 use AppBundle\Entity\PropertyType;
 use AppBundle\Entity\Source;
 use AppBundle\Repository\AdvertRepository;
+use AppBundle\Repository\AdvertTypeRepository;
 use AppBundle\Repository\CityRepository;
 use AppBundle\Repository\LocationRepository;
 use AppBundle\Repository\PropertyRepository;
@@ -25,6 +27,9 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
 {
     /** @var AdvertRepository */
     protected $advertRepository;
+
+    /** @var AdvertTypeRepository */
+    protected $advertTypeRepository;
 
     /** @var CityRepository */
     protected $cityRepository;
@@ -47,38 +52,42 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
     public function __construct(
         EntityManagerInterface $entityManager,
         LoggerInterface $logger,
+        AdvertTypeRepository $advertTypeRepository,
         PropertyConstructionRepository $propertyConstructionRepository,
         PropertyDispositionRepository $propertyDispositionRepository,
+        PropertyTypeRepository $propertyTypeRepository,
         string $sourceUrl,
         AdvertRepository $advertRepository,
         CityRepository $cityRepository,
         LocationRepository $locationRepository,
         PropertyRepository $propertyRepository,
-        PropertyTypeRepository $propertyTypeRepository,
         SourceRepository $sourceRepository
     ) {
         $this->advertRepository = $advertRepository;
         $this->cityRepository = $cityRepository;
         $this->locationRepository = $locationRepository;
         $this->propertyRepository = $propertyRepository;
-        $this->propertyTypeRepository = $propertyTypeRepository;
         $this->sourceRepository = $sourceRepository;
 
-        parent::__construct($entityManager, $logger, $propertyConstructionRepository, $propertyDispositionRepository, $sourceUrl);
+        parent::__construct(
+            $entityManager,
+            $logger,
+            $advertTypeRepository,
+            $propertyConstructionRepository,
+            $propertyDispositionRepository,
+            $propertyTypeRepository,
+            $sourceUrl
+        );
     }
 
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(): array
+    public function getNewAdverts(string $advertType, string $propertyType): array
     {
         $bazosSource = $this->sourceRepository->findOneByCode(Source::SOURCE_BAZOS);
-        $typeMap = [
-            'byt' => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
-            'dum' => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
-            'pozemek' => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
-        ];
-        $flatType = 'byt';
+        $advertTypeMap = $this->getAdvertTypeMap();
+        $propertyTypeMap = $this->getPropertyTypeMap();
         $brno = $this->cityRepository->findOneByName('Brno');
 
         $page = 1;
@@ -91,7 +100,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
 
         $adverts = [];
         foreach ($pages as $page) {
-            $listUrl = $this->constructListUrl($page, $limit, $flatType);
+            $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType);
             try {
                 $listDom = HtmlDomParser::str_get_html($this->curlGetContent($listUrl));
             } catch (\Exception $e) {
@@ -197,7 +206,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     }
 
                     $property = new Property();
-                    $property->setType($typeMap[$flatType]);
+                    $property->setType($propertyTypeMap[$propertyType]);
                     $property->setLocation($location);
 
                     $images = [];
@@ -222,6 +231,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $advert = new Advert();
+                $advert->setType($advertTypeMap[$advertType]);
                 $advert->setSource($bazosSource);
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
@@ -246,11 +256,20 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page = 1, int $limit = 20, string $propertyType = 'byt'): string
+    protected function constructListUrl(int $page = 1, int $limit = 20, string $advertType, string $propertyType): string
     {
+        $advertTypeParamMap = [
+            AdvertType::TYPE_SALE => 'prodam',
+            AdvertType::TYPE_RENT => 'pronajmu',
+        ];
+        $propertyTypeParamMap = [
+            PropertyType::TYPE_FLAT => 'byt',
+            PropertyType::TYPE_HOUSE => 'dum',
+            PropertyType::TYPE_LAND => 'pozemek',
+        ];
         $parameters = [
-            'ad_type' => 'prodam',
-            'property_type' => $propertyType,
+            'ad_type' => $advertTypeParamMap[$advertType],
+            'property_type' => $propertyTypeParamMap[$propertyType],
             'zipCode' => '60200',
             'diameter' => '10',
         ];

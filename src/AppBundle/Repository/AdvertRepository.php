@@ -18,8 +18,19 @@ final class AdvertRepository extends ServiceEntityRepository
     /**
      * @return Advert[]
      */
-    public function getLatestAdverts(int $limit = 20): array
+    public function getLatestAdverts(string $type, int $limit = 20): array
     {
-        return $this->findBy(['deletedAt' => null], ['id' => 'desc'], $limit);
+        $qb = $this->createQueryBuilder('qb')
+            ->select('a')
+            ->from('AppBundle:Advert', 'a')
+            ->leftJoin('a.type', 'at')
+            ->leftJoin('a.property', 'p')
+            ->andWhere('a.deletedAt IS NULL')
+            ->andWhere('at.code = :advertTypeCode')
+            ->setParameter('advertTypeCode', $type)
+            ->orderBy('a.updatedAt', 'DESC')
+            ->setFirstResult(0)
+            ->setMaxResults($limit);
+        return $qb->getQuery()->getResult();
     }
 }

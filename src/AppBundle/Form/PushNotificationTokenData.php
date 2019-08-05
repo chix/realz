@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace AppBundle\Form;
 
+use AppBundle\Entity\AdvertType;
 use AppBundle\Entity\CityDistrict;
 use AppBundle\Entity\PropertyDisposition;
 use AppBundle\Entity\PushNotificationToken;
+use AppBundle\Repository\AdvertTypeRepository;
 use AppBundle\Repository\CityRepository;
 use AppBundle\Repository\PushNotificationTokenRepository;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -38,10 +40,17 @@ final class PushNotificationTokenData
      */
     private $tokenRepository;
 
-    public function __construct(CityRepository $cityRepository, PushNotificationTokenRepository $tokenRepository)
-    {
+    /** @var AdvertTypeRepository */
+    protected $advertTypeRepository;
+
+    public function __construct(
+        CityRepository $cityRepository,
+        PushNotificationTokenRepository $tokenRepository,
+        AdvertTypeRepository $advertTypeRepository
+    ) {
         $this->cityRepository = $cityRepository;
         $this->tokenRepository = $tokenRepository;
+        $this->advertTypeRepository = $advertTypeRepository;
     }
 
     public function createOrUpdateEntity(array $filters): PushNotificationToken
@@ -72,6 +81,15 @@ final class PushNotificationTokenData
             $cityFilters = [];
             foreach ($rawCityFilters as $type => $parameters) {
                 switch ($type) {
+                    case 'advertType':
+                        if ($parameters === AdvertType::TYPE_SALE || $parameters === AdvertType::TYPE_RENT) {
+                            $advertType = $this->advertTypeRepository->findOneByCode($parameters);
+                            if ($advertType === null) {
+                                continue;
+                            }
+                            $cityFilters[$type] = $advertType->getCode();
+                        }
+                        break;
                     case 'price':
                         if (isset($parameters['gte']) || isset($parameters['lte'])) {
                             $cityFilters[$type] = [];

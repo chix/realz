@@ -9,6 +9,7 @@ use AppBundle\Entity\CityDistrict;
 use AppBundle\Entity\PushNotificationToken;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use AppBundle\Entity\AdvertType;
 
 final class PushNotificationTokenRepository extends ServiceEntityRepository
 {
@@ -57,18 +58,24 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
                 $qb = $this->createQueryBuilder('qb'.$cityCode);
                 $qb->select('a')
                     ->from('AppBundle:Advert', 'a')
+                    ->leftJoin('a.type', 'at')
                     ->leftJoin('a.property', 'p')
                     ->leftJoin('p.location', 'l')
                     ->leftJoin('l.city', 'c')
                     ->andWhere('a.createdAt >= :maxAge')
                     ->andWhere($qb->expr()->notIn('a.id', $ids->getDQL()))
+                    ->andWhere('at.code = :advertTypeCode')
                     ->andWhere('c.id = :cityId')
                     ->setParameter('token', $token->getToken())
                     ->setParameter('maxAge', $oneHourAgo)
                     ->setParameter('cityId', $city->getId());
 
+                $advertTypeCode = AdvertType::TYPE_SALE;
                 foreach ($cityFilters as $type => $filter) {
                     switch ($type) {
+                        case 'advertType':
+                            $advertTypeCode = $filter;
+                            break;
                         case 'price':
                             if (isset($filter['lte'])) {
                                 $qb->andWhere('(a.price IS NULL OR a.price <= :ltePrice)');
@@ -99,6 +106,7 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
                             break;
                     }
                 }
+                $qb->setParameter('advertTypeCode', $advertTypeCode);
 
                 $adverts = array_merge($adverts, $qb->getQuery()->getResult());
             }
