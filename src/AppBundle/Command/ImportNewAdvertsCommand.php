@@ -101,7 +101,7 @@ final class ImportNewAdvertsCommand extends Command
             $this->logger->debug('Starting ' . $crawler->getIdentifier());
 
             $adverts = $crawler->getNewAdverts(AdvertType::TYPE_SALE, PropertyType::TYPE_FLAT);
-            $adverts = $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT);
+            $adverts = array_merge($adverts, $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT));
 
             $this->logger->debug(count($adverts) . ' new ads found');
 
