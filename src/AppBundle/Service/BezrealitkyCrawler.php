@@ -173,7 +173,12 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     
                     $streetNode = $mainNode->find('div.heading .heading__perex', 0);
                     if ($streetNode) {
-                        $street = trim($streetNode->innertext);
+                        $street = $streetNode->innertext;
+                        $streetLinkNode = $streetNode->find('a.js-scroll', 0);
+                        if ($streetLinkNode) {
+                            $street = str_replace($streetLinkNode->outertext(), '', $street);
+                        }
+                        $street = trim($street);
                     }
                     $mapIframeNode = $mainNode->find('div#map iframe', 0);
                     if ($mapIframeNode) {

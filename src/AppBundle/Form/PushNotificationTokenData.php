@@ -85,7 +85,7 @@ final class PushNotificationTokenData
                         if ($parameters === AdvertType::TYPE_SALE || $parameters === AdvertType::TYPE_RENT) {
                             $advertType = $this->advertTypeRepository->findOneByCode($parameters);
                             if ($advertType === null) {
-                                continue;
+                                continue 2;
                             }
                             $cityFilters[$type] = $advertType->getCode();
                         }
