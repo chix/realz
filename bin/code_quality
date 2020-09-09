@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./vendor/bin/php-cs-fixer fix
+
+php -d memory_limit=-1 ./vendor/bin/phpstan analyze -l 8 -c phpstan.neon migrations/ src/ tests/

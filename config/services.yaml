@@ -1,0 +1,68 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    crawler.sreality.sourceUrl: https://www.sreality.cz/api/cs/v2/estates
+    crawler.bezrealitky.sourceUrl: https://www.bezrealitky.cz
+    crawler.bazos.sourceUrl: https://reality.bazos.cz
+    expo.notifications.backendUrl: https://exp.host/--/api/v2/push/send
+    expo.notifications.receiptsBackendUrl: https://exp.host/--/api/v2/push/getReceipts
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    # override to inject specific logger instance
+    App\Command\ImportNewAdvertsCommand:
+        arguments:
+            $logger: '@monolog.logger.crawler'
+    App\Command\PushNotificationsReceiptsCommand:
+        arguments:
+            $logger: '@monolog.logger.notifications'
+            $expoBackendUrl: '%expo.notifications.receiptsBackendUrl%'
+    App\Command\PushNotificationsTestCommand:
+        arguments:
+            $logger: '@monolog.logger.notifications'
+            $expoBackendUrl: '%expo.notifications.backendUrl%'
+    App\Command\PushNotificationsSendCommand:
+        arguments:
+            $logger: '@monolog.logger.notifications'
+            $expoBackendUrl: '%expo.notifications.backendUrl%'
+    App\Service\SrealityCrawler:
+        arguments:
+            $sourceUrl: '%crawler.sreality.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    App\Service\BezrealitkyCrawler:
+        arguments:
+            $sourceUrl: '%crawler.bezrealitky.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    App\Service\BazosCrawler:
+        arguments:
+            $sourceUrl: '%crawler.bazos.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    App\Entity\Dto\PushNotificationTokenInputTransformer:
+        tags:
+            - { name: api_platform.data_transformer }
