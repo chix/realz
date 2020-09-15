@@ -1,7 +1,7 @@
 # Realz API
 
 ## Installation
-- run `git clone ...` to pull the source code
+- run `git clone https://github.com/chix/realz.git` to pull the source code
 - run `cp .env .env.local` and configure DB credentials
 - run `composer install` to install 3rd party dependencies
 - run `php bin/console doctrine:database:create` to create DB

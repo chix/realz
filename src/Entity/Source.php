@@ -21,6 +21,7 @@ class Source extends BaseEntity
     const SOURCE_SREALITY = 'sreality';
     const SOURCE_BAZOS = 'bazos';
     const SOURCE_BEZREALITKY = 'bezrealitky';
+    const SOURCE_CESKEREALITY = 'ceskereality';
 
     /**
      * @var int

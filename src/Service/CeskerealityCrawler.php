@@ -8,6 +8,8 @@ use App\Entity\Advert;
 use App\Entity\AdvertType;
 use App\Entity\Location;
 use App\Entity\Property;
+use App\Entity\PropertyConstruction;
+use App\Entity\PropertyDisposition;
 use App\Entity\PropertyType;
 use App\Entity\Source;
 use App\Repository\AdvertRepository;
@@ -21,9 +23,11 @@ use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use simplehtmldom\HtmlDocument;
+use simplehtmldom\HtmlNode;
 use simplehtmldom\HtmlWeb;
 
-final class BazosCrawler extends CrawlerBase implements CrawlerInterface
+final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
 {
     /** @var AdvertRepository */
     protected $advertRepository;
@@ -85,22 +89,23 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
      */
     public function getNewAdverts(string $advertType, string $propertyType): array
     {
-        $bazosSource = $this->sourceRepository->findOneByCode(Source::SOURCE_BAZOS);
+        $ceskerealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_CESKEREALITY);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
         $brno = $this->cityRepository->findOneByName('Brno');
+        $constructionBrick = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_BRICK);
+        $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
 
         $page = 1;
-        $limit = 20;
         if ($this->fullCrawl) {
-            $pages = range($page, 8);
+            $pages = range($page, 10);
         } else {
             $pages = [$page];
         }
 
         $adverts = [];
         foreach ($pages as $page) {
-            $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType);
+            $listUrl = $this->constructListUrl($page, $advertType, $propertyType);
             try {
                 $document = new HtmlWeb();
                 $listDom = $document->load($listUrl);
@@ -112,34 +117,26 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $this->logger->debug('Could not load list URL: ' . $listUrl);
                 continue;
             }
-            $listDomNodes = (array)$listDom->find('table.inzeraty');
+            $listDomNodes = (array)$listDom->find('#div_nemovitost_obal .div_nemovitost');
             if (empty($listDomNodes)) {
                 $this->logger->debug('Empty nodes on URL: ' . $listUrl);
                 continue;
             }
 
-            foreach ($listDomNodes as $node) {
-                $titleNode = $node->find('span.nadpis a', 0);
-                if (!$titleNode) {
-                    $this->logger->debug('No title node');
+            foreach ($listDomNodes as $node) { /** @var HtmlNode $node */
+                $detailUrlNode = $node->find('h2 a', 0);
+                if ($detailUrlNode === false) {
                     continue;
                 }
-                $title = trim($titleNode->innertext);
-                foreach (['koupím', 'hledám', 'sháním', 'poptávám'] as $ignoredWord) {
-                    if (mb_stristr($title, $ignoredWord) !== false) {
-                        continue 2;
-                    }
-                }
-                $detailPath = trim($titleNode->href);
-                $detailUrl = $this->constructDetailUrl($detailPath);
+                $detailUrl = trim($detailUrlNode->getAttribute('href'));
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl);
                 if ($existingAdvert !== null) {
                     continue;
                 }
 
                 try {
-                    $document = new HtmlWeb();
-                    $detailDom = $document->load($detailUrl);
+                    $document = new HtmlDocument();
+                    $detailDom = $document->load(iconv('windows-1250', 'utf-8', (string)$this->curlGetContent($detailUrl)));
                 } catch (\Exception $e) {
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl . ' ' . $e->getMessage());
                     continue;
@@ -148,53 +145,39 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl);
                     continue;
                 }
-                $mainNodeChild = $detailDom->find('div.sirka table.listainzerat', 0);
-                if ($mainNodeChild === null) {
+                $mainNode = $detailDom->find('#hlavni_obsah_nemovitost', 0);
+                if ($mainNode === null) {
                     $this->logger->debug('No main node on URL: ' . $detailUrl);
                     continue;
                 }
-                $mainNode = $mainNodeChild->parent();
 
-                $description = $streetNode = $street = $priceNode = $latitude = $longitude = null;
                 $property = $this->propertyRepository->findProperty();
+                $title = trim(strip_tags($mainNode->find('div.title h1', 0)->innertext));
+                $descriptionNode = $mainNode->find('div.nemovitost-data.popis-vybaveni div[itemprop=description]', 0);
+                $description = null;
+                if ($descriptionNode) {
+                    $description = $this->normalizeHtmlString($descriptionNode->innertext);
+                }
                 if ($property !== null) {
                 } else {
-                    $descriptionNode = $mainNode->find('div.popis', 0);
-                    if ($descriptionNode) {
-                        $description = $this->normalizeHtmlString($descriptionNode->innertext);
-                    }
-                    $itemsNodes = (array)$mainNode->find('table', 2)->find('table', 0)->find('tr');
-                    foreach ($itemsNodes as $itemNode) {
-                        $itemHeadingNode = $itemNode->find('td', 0);
-                        if (!$itemHeadingNode) {
-                            continue;
-                        }
-                        $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
-                        switch (mb_strtolower($itemHeading)) {
-                            case 'lokalita':
-                                $streetNode = $itemNode->find('td', 2);
-                                break;
-                            case 'cena':
-                                $priceNode = $itemNode->find('td', 1);
-                                break;
-                        }
-                    }
+                    $street = $latitude = $longitude = null;
                     
+                    $streetNode = $mainNode->find('div.title h2', 0);
                     if ($streetNode) {
-                        $streetHrefNode = $streetNode->find('a', 0);
-                        if ($streetHrefNode) {
-                            $street = trim($streetHrefNode->innertext);
-                            $mapUrlPathParts = [];
-                            $mapHref = $streetHrefNode->href;
-                            $mapUrlParts = parse_url($mapHref);
-                            if ($mapUrlParts !== false && isset($mapUrlParts['path'])) {
-                                $mapUrlPathParts = explode('/', $mapUrlParts['path']);
-                            }
-                            if (isset($mapUrlPathParts[3])) {
-                                $gps = explode(',', $mapUrlPathParts[3]);
-                                $latitude = floatval($gps[0]);
-                                $longitude = floatval($gps[1]);
-                            }
+                        $street = trim($streetNode->innertext);
+                    }
+                    $mapIframeNode = $mainNode->find('div.nemovitost-data.mapa iframe', 0);
+                    if ($mapIframeNode) {
+                        $iframeUrlQuery = [];
+                        $iframeSrc = $mapIframeNode->src;
+                        $iframeUrlParts = parse_url($iframeSrc);
+                        if ($iframeUrlParts !== false && isset($iframeUrlParts['query'])) {
+                            parse_str($iframeUrlParts['query'], $iframeUrlQuery);
+                        }
+                        if (isset($iframeUrlQuery['q'])) {
+                            $gps = explode(',', $iframeUrlQuery['q']);
+                            $latitude = floatval($gps[0]);
+                            $longitude = floatval($gps[1]);
                         }
                     }
                     $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
@@ -210,39 +193,64 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     $property->setType($propertyTypeMap[$propertyType]);
                     $property->setLocation($location);
 
-                    $images = [];
-                    $thumbnailNodes = (array)$mainNode->find('div.fliobal div.flinavigace img');
-                    $imageNodes = (array)$mainNode->find('div.fliobal img.carousel-cell-image');
-                    for ($i = 0; $i < min([count($thumbnailNodes), count($imageNodes)]); $i++) {
-                        $imageNode = $imageNodes[$i];
-                        $thumbnailNode = $thumbnailNodes[$i];
-                        $image = trim($imageNode->{'data-flickity-lazyload'});
-                        $thumbnail = trim($thumbnailNode->src);
-                        if (empty($image) || empty($thumbnail)) {
-                            continue;
+                    $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
+
+                    $itemNodes = (array)$mainNode->find('div.nemovitost-data.podrobnosti div.polozka');
+                    foreach ($itemNodes as $itemNode) {
+                        $itemHeading = '';
+                        $itemValue = '';
+                        $itemHeadingNode = $itemNode->find('div.nazev', 0);
+                        $itemValueNode = $itemNode->find('div.hodnota', 0);
+                        if ($itemHeadingNode) {
+                            $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
                         }
+                        if ($itemValueNode) {
+                            $itemValue = trim(strip_tags($itemValueNode->innertext));
+                        }
+                        switch (mb_strtolower($itemHeading)) {
+                            case 'typ konstrukce':
+                                if (in_array(mb_strtolower($itemValue), ['panelová'])) {
+                                    $property->setConstruction($constructionPanel);
+                                } elseif (in_array(mb_strtolower($itemValue), ['zděná'])) {
+                                    $property->setConstruction($constructionBrick);
+                                }
+                                break;
+                            case 'užitná plocha':
+                                $area = str_replace([' ', 'm2'], ['', ''], $itemValue);
+                                $property->setArea(intval($area));
+                                break;
+                            case 'vlastnictví':
+                                $property->setOwnership($itemValue);
+                                break;
+                            case 'patro':
+                                $property->setFloor(intval($itemValue));
+                                break;
+                        }
+                    }
+
+                    $images = [];
+                    $imageHrefNodes = (array)$mainNode->find('div.box.media #makler_foto_lista_obr div.foto_slider a.foto');
+                    foreach ($imageHrefNodes as $imageHrefNode) {
+                        $imageSrc = 'https:' . $imageHrefNode->getAttribute('href');
                         $tmp = new \stdClass();
-                        $tmp->image = $image;
-                        $tmp->thumbnail = $thumbnail;
+                        $tmp->image = $imageSrc;
+                        $tmp->thumbnail = $imageSrc;
                         $images[] = $tmp;
                     }
                     $property->setImages($images);
-
-                    $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
                 }
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);
-                $advert->setSource($bazosSource);
+                $advert->setSource($ceskerealitySource);
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
                 $advert->setProperty($property);
                 $advert->setTitle($title);
-                if ($description) {
-                    $advert->setDescription($description);
-                }
+                $advert->setDescription($description);
+                $priceNode = $mainNode->find('div.box.main-info.right div.price-info div.price strong.price_num', 0);
                 if ($priceNode) {
-                    $priceRaw = trim(strip_tags($priceNode->innertext));
+                    $priceRaw = trim($priceNode->innertext);
                     $price = intval(str_replace(['.', ' ', 'Kč'], ['', '', ''], $priceRaw));
                     $advert->setPrice($price);
                     $advert->setCurrency('CZK');
@@ -257,34 +265,27 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page = 1, int $limit = 20, string $advertType, string $propertyType): string
+    protected function constructListUrl(int $page = 1, string $advertType, string $propertyType): string
     {
         $advertTypeParamMap = [
-            AdvertType::TYPE_SALE => 'prodam',
-            AdvertType::TYPE_RENT => 'pronajmu',
+            AdvertType::TYPE_SALE => 'prodej',
+            AdvertType::TYPE_RENT => 'pronajem',
         ];
         $propertyTypeParamMap = [
-            PropertyType::TYPE_FLAT => 'byt',
-            PropertyType::TYPE_HOUSE => 'dum',
-            PropertyType::TYPE_LAND => 'pozemek',
+            PropertyType::TYPE_FLAT => 'byty',
+            PropertyType::TYPE_HOUSE => 'rodinne-domy',
+            PropertyType::TYPE_LAND => 'pozemky',
         ];
         $parameters = [
             'ad_type' => $advertTypeParamMap[$advertType],
             'property_type' => $propertyTypeParamMap[$propertyType],
-            'zipCode' => '60200',
-            'diameter' => '10',
+            'city' => 'obec-brno',
+            'order' => 'nejnovejsi',
         ];
-        $url = $this->getSourceUrl().vsprintf('/%s/%s/?hlokalita=%s&humkreis=%s', array_values($parameters));
+        $url = $this->getSourceUrl().vsprintf('/%s/%s/%s/%s', array_values($parameters));
         if ($page > 1) {
-            $url = str_replace('/?', sprintf('/%d/?', ($page - 1) * $limit), $url);
+            $url .= '?strana='.$page;
         }
-        return $url;
-    }
-
-    protected function constructDetailUrl(string $path): string
-    {
-        $url = $this->getSourceUrl().$path;
-
         return $url;
     }
 }

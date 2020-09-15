@@ -7,6 +7,7 @@ parameters:
     crawler.sreality.sourceUrl: https://www.sreality.cz/api/cs/v2/estates
     crawler.bezrealitky.sourceUrl: https://www.bezrealitky.cz
     crawler.bazos.sourceUrl: https://reality.bazos.cz
+    crawler.ceskereality.sourceUrl: https://www.ceskereality.cz
     expo.notifications.backendUrl: https://exp.host/--/api/v2/push/send
     expo.notifications.receiptsBackendUrl: https://exp.host/--/api/v2/push/getReceipts
 
@@ -62,6 +63,10 @@ services:
     App\Service\BazosCrawler:
         arguments:
             $sourceUrl: '%crawler.bazos.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    App\Service\CeskerealityCrawler:
+        arguments:
+            $sourceUrl: '%crawler.ceskereality.sourceUrl%'
             $logger: '@monolog.logger.crawler'
     App\Entity\Dto\PushNotificationTokenInputTransformer:
         tags:

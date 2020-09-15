@@ -181,7 +181,7 @@ abstract class CrawlerBase
         }
 
         $constructionMap = [
-            PropertyConstruction::CONSTRUCTION_BRICK => ['cihla', 'cihlo'],
+            PropertyConstruction::CONSTRUCTION_BRICK => ['cihla', 'cihlo', 'zděn'],
             PropertyConstruction::CONSTRUCTION_PANEL => ['panel'],
         ];
         foreach ($constructionMap as $constructionCode => $keywords) {
@@ -245,9 +245,12 @@ abstract class CrawlerBase
         if (empty($floorMatches)) {
             preg_match("/(\d+)[\. ]*podl/i", $fulltext, $floorMatches);
         }
+        if (empty($floorMatches)) {
+            preg_match("/patro[ ]*(\d+)/i", $fulltext, $floorMatches);
+        }
         if (count($floorMatches) > 1) {
             $property->setFloor(intval($floorMatches[1]));
-        } elseif (stristr($fulltext, 'suterén')) {
+        } elseif (stristr($fulltext, 'suterén') || stristr($fulltext, 'přízem')) {
             $property->setFloor(0);
         }
 

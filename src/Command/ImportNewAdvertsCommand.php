@@ -9,6 +9,7 @@ use App\Entity\PropertyType;
 use App\Service\CrawlerInterface;
 use App\Service\BazosCrawler;
 use App\Service\BezrealitkyCrawler;
+use App\Service\CeskerealityCrawler;
 use App\Service\SrealityCrawler;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -24,7 +25,7 @@ final class ImportNewAdvertsCommand extends Command
     /**
      * @var array<string>
      */
-    protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos'];
+    protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos', 'ceskereality'];
 
     /**
      * @var EntityManagerInterface
@@ -47,6 +48,11 @@ final class ImportNewAdvertsCommand extends Command
     protected $srealityCrawler;
 
     /**
+     * @var CeskerealityCrawler
+     */
+    protected $ceskerealityCrawler;
+
+    /**
      * @var LoggerInterface
      */
     protected $logger;
@@ -56,13 +62,15 @@ final class ImportNewAdvertsCommand extends Command
         LoggerInterface $logger,
         BazosCrawler $bazosCrawler,
         BezrealitkyCrawler $bezrealityCrawler,
-        SrealityCrawler $srealityCrawler
+        SrealityCrawler $srealityCrawler,
+        CeskerealityCrawler $ceskerealityCrawler
     ) {
         $this->entityManager = $entityManager;
         $this->logger = $logger;
         $this->bazosCrawler = $bazosCrawler;
         $this->bezrealitkyCrawler = $bezrealityCrawler;
         $this->srealityCrawler = $srealityCrawler;
+        $this->ceskerealityCrawler = $ceskerealityCrawler;
 
         parent::__construct();
     }
@@ -99,6 +107,7 @@ final class ImportNewAdvertsCommand extends Command
             $crawlers[] = $this->bazosCrawler;
             $crawlers[] = $this->bezrealitkyCrawler;
             $crawlers[] = $this->srealityCrawler;
+            $crawlers[] = $this->ceskerealityCrawler;
         }
 
         foreach ($crawlers as $crawler) { /** @var CrawlerInterface $crawler */
