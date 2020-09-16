@@ -9,7 +9,6 @@ use App\Entity\AdvertType;
 use App\Entity\Location;
 use App\Entity\Property;
 use App\Entity\PropertyConstruction;
-use App\Entity\PropertyDisposition;
 use App\Entity\PropertyType;
 use App\Entity\Source;
 use App\Repository\AdvertRepository;

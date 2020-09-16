@@ -59,7 +59,6 @@ final class PushNotificationsReceiptsCommand extends Command
                 'json' => $message,
                 'headers' => [
                     'Accept: application/json',
-                    'Accept-Encoding: gzip, deflate',
                 ],
 
             ]);

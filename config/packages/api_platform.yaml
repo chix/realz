@@ -1,4 +1,7 @@
 api_platform:
+    title: 'Realz API'
+    version: '1.0.0'
+    show_webby: false
     mapping:
         paths: ['%kernel.project_dir%/src/Entity']
     patch_formats:

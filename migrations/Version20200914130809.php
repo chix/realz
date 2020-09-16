@@ -24,7 +24,7 @@ final class Version20200914130809 extends AbstractMigration
         $this->addSql(sprintf(
             'INSERT INTO source (name, code, created_at, updated_at) VALUES '.
             '("%s", "%s", NOW(), NOW())',
-            'bezrealitky.cz',
+            'ceskereality.cz',
             Source::SOURCE_CESKEREALITY
         ));
     }

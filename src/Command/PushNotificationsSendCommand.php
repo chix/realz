@@ -113,7 +113,6 @@ final class PushNotificationsSendCommand extends Command
                 'json' => $notifications,
                 'headers' => [
                     'Accept' => 'application/json',
-                    'Accept-Encoding' => 'gzip, deflate',
                 ],
             ]);
             $responseJson = $response->toArray();

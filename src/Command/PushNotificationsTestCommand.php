@@ -80,7 +80,6 @@ final class PushNotificationsTestCommand extends Command
                 'headers' => [
                     'Accept: application/json',
                     'Content-Type: application/json',
-                    'Accept-Encoding: gzip, deflate',
                 ],
             ]);
             $response->getContent();
