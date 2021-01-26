@@ -143,7 +143,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
             }
 
             foreach ($listDomNodes as $node) {
-                $detailPath = trim($node->find('div.product__body p.product__ctas a.btn-primary', 0)->href);
+                $detailPath = trim($node->find('div.product__body--left .product__title a', 0)->href);
                 $detailUrl = $this->constructDetailUrl($detailPath);
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl);
                 if ($existingAdvert !== null) {

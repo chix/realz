@@ -159,11 +159,11 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $property = $this->propertyRepository->findProperty();
                 if ($property !== null) {
                 } else {
-                    $descriptionNode = $mainNode->find('div.popis', 0);
+                    $descriptionNode = $mainNode->find('div.popisdetail', 0);
                     if ($descriptionNode) {
                         $description = $this->normalizeHtmlString($descriptionNode->innertext);
                     }
-                    $itemsNodes = (array)$mainNode->find('table', 2)->find('table', 0)->find('tr');
+                    $itemsNodes = (array)$mainNode->find('td.listadvlevo', 0)->find('table', 0)->find('tr');
                     foreach ($itemsNodes as $itemNode) {
                         $itemHeadingNode = $itemNode->find('td', 0);
                         if (!$itemHeadingNode) {
