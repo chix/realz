@@ -132,7 +132,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 $detailPath = trim($titleNode->href);
                 $detailUrl = $this->constructDetailUrl($detailPath);
-                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl);
+                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if ($existingAdvert !== null) {
                     continue;
                 }

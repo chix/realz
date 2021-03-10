@@ -128,7 +128,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
                 $detailUrl = trim($detailUrlNode->getAttribute('href'));
-                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl);
+                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if ($existingAdvert !== null) {
                     continue;
                 }

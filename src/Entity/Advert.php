@@ -10,14 +10,11 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\ExistsFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Table(name="advert", indexes={@ORM\Index(name="updated_at_idx", columns={"updated_at"})})
  * @ORM\Entity(repositoryClass="App\Repository\AdvertRepository")
- *
- * @UniqueEntity({"sourceUrl"})
  *
  * @ApiResource(
  *     collectionOperations={"get"},
@@ -99,7 +96,7 @@ class Advert extends BaseEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="sourceUrl", type="string", length=1024, unique=true)
+     * @ORM\Column(name="sourceUrl", type="string", length=1024)
      *
      * @Groups({"read"})
      */

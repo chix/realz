@@ -139,9 +139,16 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
                 $detailUrl = $this->constructDetailUrl($ad['hash_id']);
-                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl);
-                if ($existingAdvert !== null) {
-                    continue;
+                $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
+                if ($existingAdvert) {
+                    $currentPrice = null;
+                    if (!empty($ad['price_czk']) && $ad['price_czk']['value_raw'] !== 1) {
+                        $currentPrice = $ad['price_czk']['value_raw'];
+                    }
+                    $existingPrice = $existingAdvert->getPrice();
+                    if ($currentPrice === $existingPrice) {
+                        continue;
+                    }
                 }
 
                 $adDetail = json_decode((string)file_get_contents($detailUrl), true);
@@ -150,7 +157,9 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                $property = $this->propertyRepository->findProperty();
+                $property = $existingAdvert
+                    ? $existingAdvert->getProperty()
+                    : $this->propertyRepository->findProperty();
                 if ($property !== null) {
                 } else {
                     $street = $latitude = $longitude = null;
