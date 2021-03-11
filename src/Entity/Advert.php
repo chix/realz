@@ -76,6 +76,15 @@ class Advert extends BaseEntity
     private $price;
 
     /**
+     * @var int|null
+     *
+     * @ORM\Column(name="previous_price", type="integer", nullable=true)
+     *
+     * @Groups({"read"})
+     */
+    private $previousPrice;
+
+    /**
      * @var string|null $currency
      *
      * @ORM\Column(name="currency", type="string", length=8, nullable=true)
@@ -171,6 +180,18 @@ class Advert extends BaseEntity
     public function getPrice(): ?int
     {
         return $this->price;
+    }
+
+    public function setPreviousPrice(?int $previousPrice): self
+    {
+        $this->previousPrice = $previousPrice;
+
+        return $this;
+    }
+
+    public function getPreviousPrice(): ?int
+    {
+        return $this->previousPrice;
     }
 
     public function setSourceUrl(string $sourceUrl): self

@@ -266,6 +266,9 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $advert->setPrice($adDetail['price_czk']['value_raw']);
                     $advert->setCurrency('CZK');
                 }
+                if ($existingAdvert) {
+                    $advert->setPreviousPrice($existingAdvert->getPrice());
+                }
 
                 $this->assignCityDistrict($advert);
 
