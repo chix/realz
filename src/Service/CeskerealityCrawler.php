@@ -152,10 +152,13 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
 
                 $property = $this->propertyRepository->findProperty();
                 $title = trim(strip_tags($mainNode->find('div.title h1', 0)->innertext));
-                $descriptionNode = $mainNode->find('div.nemovitost-data.popis-vybaveni div[itemprop=description]', 0);
                 $description = null;
-                if ($descriptionNode) {
-                    $description = $this->normalizeHtmlString($descriptionNode->innertext);
+                $possibleDescriptionNodes = $mainNode->find('div.row h3');
+                foreach ($possibleDescriptionNodes as $descriptionNode) {
+                    if (trim($descriptionNode->innertext) !== 'Popis nemovitosti') {
+                        continue;
+                    }
+                    $description = $this->normalizeHtmlString($descriptionNode->parent->innertext);
                 }
                 if ($property !== null) {
                 } else {
@@ -165,7 +168,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     if ($streetNode) {
                         $street = trim($streetNode->innertext);
                     }
-                    $mapIframeNode = $mainNode->find('div.nemovitost-data.mapa iframe', 0);
+                    $mapIframeNode = $mainNode->find('iframe[data-block-name=map-canvas]', 0);
                     if ($mapIframeNode) {
                         $iframeUrlQuery = [];
                         $iframeSrc = $mapIframeNode->src;
@@ -194,12 +197,12 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
 
                     $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
 
-                    $itemNodes = (array)$mainNode->find('div.nemovitost-data.podrobnosti div.polozka');
+                    $itemNodes = (array)$mainNode->find('div.row div.info-table div.item');
                     foreach ($itemNodes as $itemNode) {
                         $itemHeading = '';
                         $itemValue = '';
-                        $itemHeadingNode = $itemNode->find('div.nazev', 0);
-                        $itemValueNode = $itemNode->find('div.hodnota', 0);
+                        $itemHeadingNode = $itemNode->find('div.name', 0);
+                        $itemValueNode = $itemNode->find('div.value', 0);
                         if ($itemHeadingNode) {
                             $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
                         }
@@ -208,6 +211,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                         }
                         switch (mb_strtolower($itemHeading)) {
                             case 'typ konstrukce':
+                            case 'konstrukce':
                                 if (in_array(mb_strtolower($itemValue), ['panelová'])) {
                                     $property->setConstruction($constructionPanel);
                                 } elseif (in_array(mb_strtolower($itemValue), ['zděná'])) {
@@ -215,6 +219,9 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                                 }
                                 break;
                             case 'užitná plocha':
+                            case 'plocha užitná':
+                            case 'plocha obytná':
+                            case 'obytná plocha':
                                 $area = str_replace([' ', 'm2'], ['', ''], $itemValue);
                                 $property->setArea(intval($area));
                                 break;
@@ -228,9 +235,9 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     }
 
                     $images = [];
-                    $imageHrefNodes = (array)$mainNode->find('div.box.media #makler_foto_lista_obr div.foto_slider a.foto');
+                    $imageHrefNodes = (array)$mainNode->find('div#media-window div.media-slide a.cbox');
                     foreach ($imageHrefNodes as $imageHrefNode) {
-                        $imageSrc = 'https:' . $imageHrefNode->getAttribute('href');
+                        $imageSrc = $imageHrefNode->getAttribute('href');
                         $tmp = new \stdClass();
                         $tmp->image = $imageSrc;
                         $tmp->thumbnail = $imageSrc;
@@ -247,10 +254,9 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setProperty($property);
                 $advert->setTitle($title);
                 $advert->setDescription($description);
-                $priceNode = $mainNode->find('div.box.main-info.right div.price-info div.price strong.price_num', 0);
+                $priceNode = $mainNode->find('span[itemprop=price]', 0);
                 if ($priceNode) {
-                    $priceRaw = trim($priceNode->innertext);
-                    $price = intval(str_replace(['.', ' ', 'Kč'], ['', '', ''], $priceRaw));
+                    $price = intval(trim($priceNode->content));
                     $advert->setPrice($price);
                     $advert->setCurrency('CZK');
                 }
