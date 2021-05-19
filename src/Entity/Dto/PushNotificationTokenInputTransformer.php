@@ -5,6 +5,7 @@ namespace App\Entity\Dto;
 use ApiPlatform\Core\Bridge\Symfony\Validator\Exception\ValidationException as ApiPlatformValidationException;
 use ApiPlatform\Core\DataTransformer\DataTransformerInterface;
 use ApiPlatform\Core\Validator\ValidatorInterface;
+use App\Entity\City;
 use App\Entity\CityDistrict;
 use App\Entity\PropertyDisposition;
 use App\Entity\PushNotificationToken;
@@ -97,16 +98,10 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
             return $filters;
         }
 
-        foreach ($rawFilters as $cityCode => $rawCityFilters) {
-            $city = $this->cityRepository->findOneByCode((string)$cityCode);
-            if ($city === null) {
-                throw $this->createValidationException(
-                    'filters',
-                    "City with code {$cityCode} not found."
-                );
-            }
-            $cityDistrictCodes = $city->getCityDistrictCodes();
-            $cityDistrictCodes[] = CityDistrict::CODE_UNASSIGNED;
+        foreach ($rawFilters as $rawCityFilters) {
+            /** @var City|null $city */
+            $city = null;
+            ksort($rawCityFilters);
             $cityFilters = [];
             foreach ($rawCityFilters as $type => $filter) {
                 switch ($type) {
@@ -120,19 +115,31 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                         }
                         $cityFilters[$type] = $advertType->getCode();
                         break;
-                    case 'price':
-                        if (!isset($filter['gte']) && !isset($filter['lte'])) {
+                    case 'cityCode':
+                        $city = $this->cityRepository->findOneByCode($filter);
+                        if ($city === null) {
                             throw $this->createValidationException(
                                 'filters',
-                                "Either gte or lte have to be set on the price filter."
+                                "City with code {$filter} not found."
                             );
                         }
-                        $cityFilters[$type] = [];
-                        if (isset($filter['gte'])) {
-                            $cityFilters[$type]['gte'] = intval($filter['gte']);
+                        $cityFilters[$type] = $city->getCode();
+                        break;
+                    case 'cityDistrict':
+                        if (empty($filter) || $city === null) {
+                            continue 2;
                         }
-                        if (isset($filter['lte'])) {
-                            $cityFilters[$type]['lte'] = intval($filter['lte']);
+                        $cityDistrictCodes = $city->getCityDistrictCodes();
+                        $cityDistrictCodes[] = CityDistrict::CODE_UNASSIGNED;
+                        $cityFilters[$type] = [];
+                        foreach ($filter as $disctrictCode) {
+                            if (!in_array($disctrictCode, $cityDistrictCodes)) {
+                                throw $this->createValidationException(
+                                    'filters',
+                                    "City district {$disctrictCode} not found."
+                                );
+                            }
+                            $cityFilters[$type][] = $disctrictCode;
                         }
                         break;
                     case 'disposition':
@@ -149,18 +156,19 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                             }
                         }
                         break;
-                    case 'cityDistrict':
-                        if (!empty($filter)) {
-                            $cityFilters[$type] = [];
-                            foreach ($filter as $disctrictCode) {
-                                if (!in_array($disctrictCode, $cityDistrictCodes)) {
-                                    throw $this->createValidationException(
-                                        'filters',
-                                        "City district {$disctrictCode} not found."
-                                    );
-                                }
-                                $cityFilters[$type][] = $disctrictCode;
-                            }
+                    case 'price':
+                        if (!isset($filter['gte']) && !isset($filter['lte'])) {
+                            throw $this->createValidationException(
+                                'filters',
+                                "Either gte or lte have to be set on the price filter."
+                            );
+                        }
+                        $cityFilters[$type] = [];
+                        if (isset($filter['gte'])) {
+                            $cityFilters[$type]['gte'] = intval($filter['gte']);
+                        }
+                        if (isset($filter['lte'])) {
+                            $cityFilters[$type]['lte'] = intval($filter['lte']);
                         }
                         break;
                     default:
@@ -171,7 +179,7 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                 }
             }
             if (!empty($cityFilters)) {
-                $filters[$cityCode] = $cityFilters;
+                $filters[] = $cityFilters;
             }
         }
         

@@ -49,26 +49,18 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
         $adverts = [];
         $filters = $token->getFilters();
         if (!empty($filters)) {
-            foreach ($filters as $cityCode => $cityFilters) {
-                $city = $this->cityRepository->findOneByCode($cityCode);
-                if ($city === null) {
-                    continue;
-                }
-
+            foreach ($filters as $cityFilters) {
                 $qb = $this->getEntityManager()->createQueryBuilder();
                 $qb->select('a')
                     ->from('App:Advert', 'a')
                     ->leftJoin('a.type', 'at')
                     ->leftJoin('a.property', 'p')
                     ->leftJoin('p.location', 'l')
-                    ->leftJoin('l.city', 'c')
                     ->andWhere('a.createdAt >= :maxAge')
                     ->andWhere($qb->expr()->notIn('a.id', $ids->getDQL()))
                     ->andWhere('at.code = :advertTypeCode')
-                    ->andWhere('c.id = :cityId')
                     ->setParameter('token', $token->getToken())
-                    ->setParameter('maxAge', $oneHourAgo)
-                    ->setParameter('cityId', $city->getId());
+                    ->setParameter('maxAge', $oneHourAgo);
 
                 $advertTypeCode = AdvertType::TYPE_SALE;
                 foreach ($cityFilters as $type => $filter) {
@@ -91,6 +83,17 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
                                 $qb->leftJoin('p.disposition', 'pd');
                                 $qb->andWhere('pd.code IN (:dispositionCodes)');
                                 $qb->setParameter('dispositionCodes', $filter);
+                            }
+                            break;
+                        case 'cityCode':
+                            if (!empty($filter)) {
+                                $city = $this->cityRepository->findOneByCode($filter);
+                                if ($city === null) {
+                                    continue 2;
+                                }
+                                $qb->leftJoin('l.city', 'c');
+                                $qb->andWhere('c.id = :cityId');
+                                $qb->setParameter('cityId', $city->getId());
                             }
                             break;
                         case 'cityDistrict':

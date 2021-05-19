@@ -38,43 +38,44 @@ final class PushNotificationTokenInput
      * @ApiProperty(
      *     attributes={
      *         "openapi_context": {
-     *             "type": "object",
-     *             "properties": {
-     *                 "582786": {
-     *                     "type": "object",
-     *                     "description": "Object key is a city code",
-     *                     "properties": {
-     *                         "advertType": {
-     *                             "type": "string",
-     *                             "enum": {"sale", "rent"}
-     *                         },
-     *                         "price": {
-     *                             "type": "object",
-     *                             "properties": {
-     *                                 "lte": {
-     *                                     "type": "number",
-     *                                     "example": 5000000
-     *                                 },
-     *                                 "gte": {
-     *                                     "type": "number",
-     *                                     "example": 0
-     *                                 }
+     *             "type": "array",
+     *             "items": {
+     *                 "type": "object",
+     *                 "properties": {
+     *                     "cityCode": {
+     *                         "type": "string",
+     *                         "example": "582786"
+     *                     },
+     *                     "advertType": {
+     *                         "type": "string",
+     *                         "enum": {"sale", "rent"}
+     *                     },
+     *                     "price": {
+     *                         "type": "object",
+     *                         "properties": {
+     *                             "lte": {
+     *                                 "type": "number",
+     *                                 "example": 5000000
+     *                             },
+     *                             "gte": {
+     *                                 "type": "number",
+     *                                 "example": 0
      *                             }
-     *                         },
-     *                         "disposition": {
-     *                             "type": "array",
-     *                             "items": {
-     *                                 "type": "string"
-     *                             },
-     *                             "example": {"1+kk", "1+1", "other"}
-     *                         },
-     *                         "cityDistrict": {
-     *                             "type": "array",
-     *                             "items": {
-     *                                 "type": "string"
-     *                             },
-     *                             "example": {"550973","550990", "unassigned"}
      *                         }
+     *                     },
+     *                     "disposition": {
+     *                         "type": "array",
+     *                         "items": {
+     *                             "type": "string"
+     *                         },
+     *                         "example": {"1+kk", "1+1", "other"}
+     *                     },
+     *                     "cityDistrict": {
+     *                         "type": "array",
+     *                         "items": {
+     *                             "type": "string"
+     *                         },
+     *                         "example": {"550973", "550990", "unassigned"}
      *                     }
      *                 }
      *             }
