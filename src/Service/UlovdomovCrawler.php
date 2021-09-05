@@ -8,7 +8,6 @@ use App\Entity\Advert;
 use App\Entity\AdvertType;
 use App\Entity\Location;
 use App\Entity\Property;
-use App\Entity\PropertyConstruction;
 use App\Entity\PropertyDisposition;
 use App\Entity\PropertyType;
 use App\Entity\Source;
@@ -96,7 +95,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
             return [];
         }
 
-        $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_ULOVDOMOV);
+        $ulovdomovSource = $this->sourceRepository->findOneByCode(Source::SOURCE_ULOVDOMOV);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
         $brno = $this->cityRepository->findOneByName('Brno');
@@ -227,7 +226,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);
-                $advert->setSource($srealitySource);
+                $advert->setSource($ulovdomovSource);
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($ad['absolute_url']);
                 $advert->setProperty($property);
@@ -256,7 +255,6 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                 $this->assignCityDistrict($advert);
 
                 $adverts[$ad['id']] = $advert;
-                return $adverts;
             }
         }
 
