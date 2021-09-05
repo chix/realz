@@ -11,6 +11,7 @@ use App\Service\BazosCrawler;
 use App\Service\BezrealitkyCrawler;
 use App\Service\CeskerealityCrawler;
 use App\Service\SrealityCrawler;
+use App\Service\UlovdomovCrawler;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -25,7 +26,7 @@ final class ImportNewAdvertsCommand extends Command
     /**
      * @var array<string>
      */
-    protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos', 'ceskereality'];
+    protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos', 'ceskereality', 'ulovdomov'];
 
     /**
      * @var EntityManagerInterface
@@ -52,6 +53,12 @@ final class ImportNewAdvertsCommand extends Command
      */
     protected $ceskerealityCrawler;
 
+
+    /**
+     * @var UlovdomovCrawler
+     */
+    protected $ulovdomovCrawler;
+
     /**
      * @var LoggerInterface
      */
@@ -63,7 +70,8 @@ final class ImportNewAdvertsCommand extends Command
         BazosCrawler $bazosCrawler,
         BezrealitkyCrawler $bezrealityCrawler,
         SrealityCrawler $srealityCrawler,
-        CeskerealityCrawler $ceskerealityCrawler
+        CeskerealityCrawler $ceskerealityCrawler,
+        UlovdomovCrawler $ulovdomovCrawler
     ) {
         $this->entityManager = $entityManager;
         $this->logger = $logger;
@@ -71,6 +79,7 @@ final class ImportNewAdvertsCommand extends Command
         $this->bezrealitkyCrawler = $bezrealityCrawler;
         $this->srealityCrawler = $srealityCrawler;
         $this->ceskerealityCrawler = $ceskerealityCrawler;
+        $this->ulovdomovCrawler = $ulovdomovCrawler;
 
         parent::__construct();
     }
@@ -108,6 +117,7 @@ final class ImportNewAdvertsCommand extends Command
             $crawlers[] = $this->bezrealitkyCrawler;
             $crawlers[] = $this->srealityCrawler;
             $crawlers[] = $this->ceskerealityCrawler;
+            $crawlers[] = $this->ulovdomovCrawler;
         }
 
         foreach ($crawlers as $crawler) { /** @var CrawlerInterface $crawler */

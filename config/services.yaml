@@ -8,6 +8,7 @@ parameters:
     crawler.bezrealitky.sourceUrl: https://www.bezrealitky.cz
     crawler.bazos.sourceUrl: https://reality.bazos.cz
     crawler.ceskereality.sourceUrl: https://www.ceskereality.cz
+    crawler.ulovdomov.sourceUrl: https://www.ulovdomov.cz/fe-api
     expo.notifications.backendUrl: https://exp.host/--/api/v2/push/send
     expo.notifications.receiptsBackendUrl: https://exp.host/--/api/v2/push/getReceipts
 
@@ -67,6 +68,10 @@ services:
     App\Service\CeskerealityCrawler:
         arguments:
             $sourceUrl: '%crawler.ceskereality.sourceUrl%'
+            $logger: '@monolog.logger.crawler'
+    App\Service\UlovdomovCrawler:
+        arguments:
+            $sourceUrl: '%crawler.ulovdomov.sourceUrl%'
             $logger: '@monolog.logger.crawler'
     App\Entity\Dto\PushNotificationTokenInputTransformer:
         tags:
