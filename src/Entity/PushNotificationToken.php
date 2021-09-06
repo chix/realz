@@ -165,7 +165,9 @@ class PushNotificationToken extends BaseEntity
 
     public function addAdvert(Advert $advert): self
     {
-        $this->adverts[] = $advert;
+        if (!$this->adverts->contains($advert)) {
+            $this->adverts[] = $advert;
+        }
 
         return $this;
     }

@@ -112,7 +112,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $this->logger->debug('Could not load list URL: ' . $listUrl);
                 continue;
             }
-            $listDomNodes = (array)$listDom->find('table.inzeraty');
+            $listDomNodes = (array)$listDom->find('.inzeraty.inzeratyflex');
             if (empty($listDomNodes)) {
                 $this->logger->debug('Empty nodes on URL: ' . $listUrl);
                 continue;
@@ -148,12 +148,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl);
                     continue;
                 }
-                $mainNodeChild = $detailDom->find('div.sirka table.listainzerat', 0);
-                if ($mainNodeChild === null) {
-                    $this->logger->debug('No main node on URL: ' . $detailUrl);
-                    continue;
-                }
-                $mainNode = $mainNodeChild->parent();
+                $mainNode = $detailDom->find('div.maincontent', 0);
 
                 $description = $streetNode = $street = $priceNode = $latitude = $longitude = null;
                 $property = $this->propertyRepository->findProperty();
