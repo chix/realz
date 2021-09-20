@@ -95,6 +95,7 @@ final class PushNotificationsSendCommand extends Command
                 $notification->body = implode(', ', $bodyParts);
                 $notification->data = new \stdClass();
                 $notification->data->id = $advert->getId();
+                $notification->data->type = $advert->getType()->getCode();
                 $notifications[] = $notification;
                 $advertMap[$advert->getId()] = $advert;
                 $tokenMap[$activeToken->getToken()] = $activeToken;

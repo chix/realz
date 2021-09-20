@@ -46,7 +46,8 @@ final class PushNotificationsTestCommand extends Command
             ->setDescription('Send a push notification.')
             ->addArgument('token', InputArgument::REQUIRED, 'Expo token')
             ->addArgument('channel', InputArgument::REQUIRED, 'Android channel ID')
-            ->addArgument('id', InputArgument::REQUIRED, 'Detail ID')
+            ->addArgument('type', InputArgument::REQUIRED, 'Advert type')
+            ->addArgument('id', InputArgument::REQUIRED, 'Advert ID')
             ->addOption('count', 'c', InputOption::VALUE_REQUIRED, 'How many?', 1)
         ;
     }
@@ -56,6 +57,7 @@ final class PushNotificationsTestCommand extends Command
         $token = $input->getArgument('token');
         $channel = $input->getArgument('channel');
         $id = $input->getArgument('id');
+        $type = $input->getArgument('type');
         $count = intval($input->getOption('count'));
 
         $data = [];
@@ -66,6 +68,7 @@ final class PushNotificationsTestCommand extends Command
         $message->body = 'Test notification';
         $message->data = new \stdClass();
         $message->data->id = $id;
+        $message->data->type = $type;
         $message->sound = 'default';
         $message->vibrate = true;
         for ($i = 1; $i <= $count; $i++) {
