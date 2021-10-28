@@ -85,7 +85,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(string $advertType, string $propertyType): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $bezrealitkySource = $this->sourceRepository->findOneByCode(Source::SOURCE_BEZREALITKY);
         $advertTypeMap = $this->getAdvertTypeMap();
@@ -147,7 +147,18 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $detailUrl = $this->constructDetailUrl($detailPath);
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if ($existingAdvert !== null) {
-                    continue;
+                    $currentPrice = null;
+
+                    $priceNode = $node->find('div.product__body--left .product__value', 0);
+                    if ($priceNode) {
+                        $priceRaw = trim(strip_tags($priceNode->innertext));
+                        $currentPrice = intval(preg_replace('/\D/', '', $priceRaw));
+                    }
+
+                    $existingPrice = $existingAdvert->getPrice();
+                    if ((int)$currentPrice === (int)$existingPrice) {
+                        continue;
+                    }
                 }
 
                 try {
@@ -161,118 +172,101 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: ' . $detailUrl);
                     continue;
                 }
-                $mainNode = $detailDom->find('main[role=main] article[role=article]', 0);
+                $mainNode = $detailDom->find('main[role=main] article[role=article] > .main__container', 0);
                 if ($mainNode === null) {
                     $this->logger->debug('No main node on URL: ' . $detailUrl);
                     continue;
                 }
 
-                $cityDistrict = '';
-                $property = $this->propertyRepository->findProperty();
-                if ($property !== null) {
-                } else {
-                    $street = $latitude = $longitude = null;
-                    
-                    $streetNode = $mainNode->find('div.heading .heading__perex', 0);
-                    if ($streetNode) {
-                        $street = $streetNode->innertext;
-                        $streetLinkNode = $streetNode->find('a.js-scroll', 0);
-                        if ($streetLinkNode) {
-                            $street = str_replace($streetLinkNode->outertext(), '', $street);
-                        }
-                        $street = trim($street);
-                    }
-                    $mapIframeNode = $mainNode->find('div#map iframe', 0);
-                    if ($mapIframeNode) {
-                        $iframeUrlQuery = [];
-                        $iframeSrc = $mapIframeNode->src;
-                        $iframeUrlParts = parse_url($iframeSrc);
-                        if ($iframeUrlParts !== false && isset($iframeUrlParts['query'])) {
-                            parse_str($iframeUrlParts['query'], $iframeUrlQuery);
-                        }
-                        if (isset($iframeUrlQuery['q'])) {
-                            $gps = explode(',', $iframeUrlQuery['q']);
-                            $latitude = floatval($gps[0]);
-                            $longitude = floatval($gps[1]);
-                        }
-                    }
-                    $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                    if ($location === null) {
-                        $location = new Location();
-                        $location->setCity($brno);
-                        $location->setStreet($street);
-                        $location->setLatitude($latitude);
-                        $location->setLongitude($longitude);
-                    }
-
+                $property = $existingAdvert
+                    ? $existingAdvert->getProperty()
+                    : $this->propertyRepository->findProperty();
+                if ($property === null) {
                     $property = new Property();
                     $property->setType($propertyTypeMap[$propertyType]);
-                    $property->setLocation($location);
-                    $itemNodes = (array)$mainNode->find('div.main__container div.b-desc table.table tbody tr');
-                    foreach ($itemNodes as $itemNode) {
-                        $itemHeading = '';
-                        $itemValue = '';
-                        $itemHeadingNode = $itemNode->find('th', 0);
-                        $itemValueNode = $itemNode->find('td', 0);
-                        if ($itemHeadingNode) {
-                            $itemHeading = str_replace(':', '', trim($itemHeadingNode->innertext));
-                        }
-                        if ($itemValueNode) {
-                            $itemValue = trim($itemValueNode->innertext);
-                        }
-                        switch (mb_strtolower($itemHeading)) {
-                            case 'dispozice':
-                                if (isset($dispositionMap[$itemValue])) {
-                                    $property->setDisposition($dispositionMap[$itemValue]);
-                                } else {
-                                    $property->setDisposition($dispositionMap['Ostatní']);
-                                }
-                                break;
-                            case 'typ budovy':
-                                if (in_array(mb_strtolower($itemValue), ['panel'])) {
-                                    $property->setConstruction($constructionPanel);
-                                } elseif (in_array(mb_strtolower($itemValue), ['cihla'])) {
-                                    $property->setConstruction($constructionBrick);
-                                }
-                                break;
-                            case 'plocha':
-                                $area = str_replace([' ', 'm²'], ['', ''], $itemValue);
-                                $property->setArea(intval($area));
-                                break;
-                            case 'typ vlastnictví':
-                                $property->setOwnership($itemValue);
-                                break;
-                            case 'podlaží':
-                                $property->setFloor(intval($itemValue));
-                                break;
-                            case 'balkón':
-                                $property->setBalcony((mb_strtolower($itemValue) === 'ano'));
-                                break;
-                            case 'terasa':
-                                $property->setTerrace((mb_strtolower($itemValue) === 'ano'));
-                                break;
-                            case 'městská část':
-                                $cityDistrict = trim($itemValue);
-                                break;
-                        }
-                    }
-                    $images = [];
-                    $imageHrefNodes = (array)$mainNode->find('div.main__container div.carousel div.carousel__list a');
-                    foreach ($imageHrefNodes as $imageHrefNode) {
-                        if ($imageHrefNode->class && mb_stristr($imageHrefNode->class, 'gallery-ad-img')) {
-                            continue;
-                        }
-                        $imageNode = $imageHrefNode->find('img', 0);
-                        if (!$imageNode) {
-                            continue;
-                        }
-                        $tmp = new \stdClass();
-                        $tmp->image = trim($imageNode->src);
-                        $tmp->thumbnail = $tmp->image;
-                        $images[] = $tmp;
-                    }
-                    $property->setImages($images);
                 }
+
+                $street = $latitude = $longitude = null;
+                $titleNode = $mainNode->find('[data-element="detail-title"]', 0);
+                if ($titleNode) {
+                    $streetNode = $titleNode->find('h2', 0);
+                    if ($streetNode) {
+                        $street = $streetNode->innertext;
+                    }
+                }
+                $mapNode = $mainNode->find('div#map', 0);
+                if ($mapNode) {
+                    $latitude = floatval($mapNode->getAttribute('data-lat'));
+                    $longitude = floatval($mapNode->getAttribute('data-lng'));
+                }
+                $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
+                if ($location === null) {
+                    $location = new Location();
+                    $location->setCity($brno);
+                    $location->setStreet($street);
+                    $location->setLatitude($latitude);
+                    $location->setLongitude($longitude);
+                }
+                $property->setLocation($location);
+
+                $cityDistrict = '';
+                $itemNodes = (array)$mainNode->find('#detail-parameters div.row.param');
+                foreach ($itemNodes as $itemNode) {
+                    $itemHeading = '';
+                    $itemValue = '';
+                    $itemHeadingNode = $itemNode->find('.param-title', 0);
+                    $itemValueNode = $itemNode->find('.param-value', 0);
+                    if ($itemHeadingNode) {
+                        $itemHeading = trim($itemHeadingNode->innertext);
+                    }
+                    if ($itemValueNode) {
+                        $itemValue = trim($itemValueNode->innertext);
+                    }
+                    switch (mb_strtolower($itemHeading)) {
+                        case 'dispozice':
+                            if (isset($dispositionMap[$itemValue])) {
+                                $property->setDisposition($dispositionMap[$itemValue]);
+                            } else {
+                                $property->setDisposition($dispositionMap['Ostatní']);
+                            }
+                            break;
+                        case 'typ budovy':
+                            if (in_array(mb_strtolower($itemValue), ['panel'])) {
+                                $property->setConstruction($constructionPanel);
+                            } elseif (in_array(mb_strtolower($itemValue), ['cihla'])) {
+                                $property->setConstruction($constructionBrick);
+                            }
+                            break;
+                        case 'plocha':
+                            $area = str_replace([' ', 'm²'], ['', ''], $itemValue);
+                            $property->setArea(intval($area));
+                            break;
+                        case 'typ vlastnictví':
+                            $property->setOwnership($itemValue);
+                            break;
+                        case 'podlaží':
+                            $property->setFloor(intval($itemValue));
+                            break;
+                        case 'balkón':
+                            $property->setBalcony((mb_strtolower($itemValue) === 'ano'));
+                            break;
+                        case 'terasa':
+                            $property->setTerrace((mb_strtolower($itemValue) === 'ano'));
+                            break;
+                        case 'městská část':
+                            $cityDistrict = trim($itemValue);
+                            break;
+                    }
+                }
+                $images = [];
+                $imageNodes = (array)$detailDom->find('main[role=main] article[role=article] .detail-gallery .detail-slick-item img');
+                foreach ($imageNodes as $imageNode) {
+                    $tmp = new \stdClass();
+                    $tmp->image = trim($imageNode->src);
+                    $tmp->thumbnail = $tmp->image;
+                    $images[] = $tmp;
+                }
+                $property->setImages($images);
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);
@@ -280,17 +274,23 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
                 $advert->setProperty($property);
-                $advert->setTitle(trim((string)$mainNode->find('div.heading h1.heading__title span', 0)->innertext));
-                $descriptionNode = $mainNode->find('div.main__container div.b-desc p.b-desc__info', 0);
+                if ($titleNode) {
+                    $advert->setTitle(trim((string)$titleNode->find('h1', 0)->innertext));
+
+                    $priceNode = $titleNode->find('.detail-price', 0);
+                    if ($priceNode) {
+                        $priceRaw = trim($priceNode->innertext);
+                        $price = intval(preg_replace('/\D/', '', $priceRaw));
+                        $advert->setPrice($price);
+                        $advert->setCurrency('CZK');
+                    }
+                }
+                $descriptionNode = $mainNode->find('#description p', 0);
                 if ($descriptionNode) {
                     $advert->setDescription($this->normalizeHtmlString($descriptionNode->innertext));
                 }
-                $priceNode = $mainNode->find('div.heading p.heading__side', 0);
-                if ($priceNode) {
-                    $priceRaw = trim($priceNode->innertext);
-                    $price = intval(str_replace(['.', ' ', 'Kč'], ['', '', ''], $priceRaw));
-                    $advert->setPrice($price);
-                    $advert->setCurrency('CZK');
+                if ($existingAdvert) {
+                    $advert->setPreviousPrice($existingAdvert->getPrice());
                 }
 
                 $this->assignCityDistrict($advert, $cityDistrict);

@@ -89,7 +89,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(string $advertType, string $propertyType): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         if ($advertType !== AdvertType::TYPE_RENT || $propertyType !== PropertyType::TYPE_FLAT) {
             return [];
@@ -168,63 +168,55 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                     }
                 }
 
-                /*
-                $adDetail = json_decode((string)file_get_contents($detailUrl), true);
-                if (empty($adDetail)) {
-                    $this->logger->debug('Could not load detail URL: ' . $detailUrl, [$ad['hash_id']]);
-                    continue;
-                }
-                */
-
                 $property = $existingAdvert
                     ? $existingAdvert->getProperty()
                     : $this->propertyRepository->findProperty();
-                if ($property !== null) {
-                } else {
-                    $street = $latitude = $longitude = null;
-                    if (!empty($ad['street'])) {
-                        $street = $ad['street']['label'];
-                    }
-                    if (!empty($ad['lat']) && !empty($ad['lng'])) {
-                        $latitude = $ad['lat'];
-                        $longitude = $ad['lng'];
-                    }
-                    $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                    if ($location === null) {
-                        $location = new Location();
-                        $location->setCity($brno);
-                        $location->setStreet($street);
-                        $location->setLatitude($latitude);
-                        $location->setLongitude($longitude);
-                    }
-
+                if ($property === null) {
                     $property = new Property();
                     $property->setType($propertyTypeMap[$propertyType]);
-                    if (isset($dispositionMap[$ad['disposition_id']])) {
-                        $property->setDisposition($dispositionMap[$ad['disposition_id']]);
-                    } else {
-                        $property->setDisposition($dispositionMap[16]);
-                    }
-                    $property->setLocation($location);
-
-                    if (!empty($ad['floor_level'])) {
-                        $property->setFloor($ad['floor_level']);
-                    }
-                    if (!empty($ad['acreage'])) {
-                        $property->setArea($ad['acreage']);
-                    }
-
-                    $images = [];
-                    if (!empty($ad['photos'])) {
-                        foreach ($ad['photos'] as $image) {
-                            $tmp = new \stdClass();
-                            $tmp->image = $image['path'];
-                            $tmp->thumbnail = $image['path'];
-                            $images[] = $tmp;
-                        }
-                    }
-                    $property->setImages($images);
                 }
+
+                $street = $latitude = $longitude = null;
+                if (!empty($ad['street'])) {
+                    $street = $ad['street']['label'];
+                }
+                if (!empty($ad['lat']) && !empty($ad['lng'])) {
+                    $latitude = $ad['lat'];
+                    $longitude = $ad['lng'];
+                }
+                $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
+                if ($location === null) {
+                    $location = new Location();
+                    $location->setCity($brno);
+                    $location->setStreet($street);
+                    $location->setLatitude($latitude);
+                    $location->setLongitude($longitude);
+                }
+                $property->setLocation($location);
+
+                if (isset($dispositionMap[$ad['disposition_id']])) {
+                    $property->setDisposition($dispositionMap[$ad['disposition_id']]);
+                } else {
+                    $property->setDisposition($dispositionMap[16]);
+                }
+
+                if (!empty($ad['floor_level'])) {
+                    $property->setFloor($ad['floor_level']);
+                }
+                if (!empty($ad['acreage'])) {
+                    $property->setArea($ad['acreage']);
+                }
+
+                $images = [];
+                if (!empty($ad['photos'])) {
+                    foreach ($ad['photos'] as $image) {
+                        $tmp = new \stdClass();
+                        $tmp->image = $image['path'];
+                        $tmp->thumbnail = $image['path'];
+                        $images[] = $tmp;
+                    }
+                }
+                $property->setImages($images);
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);

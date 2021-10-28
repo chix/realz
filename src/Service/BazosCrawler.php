@@ -83,7 +83,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(string $advertType, string $propertyType): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $bazosSource = $this->sourceRepository->findOneByCode(Source::SOURCE_BAZOS);
         $advertTypeMap = $this->getAdvertTypeMap();
@@ -119,7 +119,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
             }
 
             foreach ($listDomNodes as $node) {
-                $titleNode = $node->find('span.nadpis a', 0);
+                $titleNode = $node->find('.inzeratynadpis span.nadpis a', 0);
                 if (!$titleNode) {
                     $this->logger->debug('No title node');
                     continue;
@@ -130,11 +130,22 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                         continue 2;
                     }
                 }
+                $priceNode = $node->find('.inzeratycena', 0);
+                if (!$priceNode) {
+                    $this->logger->debug('No price node');
+                    continue;
+                }
                 $detailPath = trim($titleNode->href);
                 $detailUrl = $this->constructDetailUrl($detailPath);
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if ($existingAdvert !== null) {
-                    continue;
+                    $priceRaw = trim(strip_tags($priceNode->innertext));
+                    $currentPrice = intval(preg_replace('/\D/', '', $priceRaw));
+
+                    $existingPrice = $existingAdvert->getPrice();
+                    if ((int)$currentPrice === (int)$existingPrice) {
+                        continue;
+                    }
                 }
 
                 try {
@@ -150,81 +161,82 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 $mainNode = $detailDom->find('div.maincontent', 0);
 
-                $description = $streetNode = $street = $priceNode = $latitude = $longitude = null;
-                $property = $this->propertyRepository->findProperty();
-                if ($property !== null) {
-                } else {
-                    $descriptionNode = $mainNode->find('div.popisdetail', 0);
-                    if ($descriptionNode) {
-                        $description = $this->normalizeHtmlString($descriptionNode->innertext);
-                    }
-                    $itemsNodes = (array)$mainNode->find('td.listadvlevo', 0)->find('table', 0)->find('tr');
-                    foreach ($itemsNodes as $itemNode) {
-                        $itemHeadingNode = $itemNode->find('td', 0);
-                        if (!$itemHeadingNode) {
-                            continue;
-                        }
-                        $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
-                        switch (mb_strtolower($itemHeading)) {
-                            case 'lokalita':
-                                $streetNode = $itemNode->find('td', 2);
-                                break;
-                            case 'cena':
-                                $priceNode = $itemNode->find('td', 1);
-                                break;
-                        }
-                    }
-                    
-                    if ($streetNode) {
-                        $streetHrefNode = $streetNode->find('a', 0);
-                        if ($streetHrefNode) {
-                            $street = trim($streetHrefNode->innertext);
-                            $mapUrlPathParts = [];
-                            $mapHref = $streetHrefNode->href;
-                            $mapUrlParts = parse_url($mapHref);
-                            if ($mapUrlParts !== false && isset($mapUrlParts['path'])) {
-                                $mapUrlPathParts = explode('/', $mapUrlParts['path']);
-                            }
-                            if (isset($mapUrlPathParts[3])) {
-                                $gps = explode(',', $mapUrlPathParts[3]);
-                                $latitude = floatval($gps[0]);
-                                $longitude = floatval($gps[1]);
-                            }
-                        }
-                    }
-                    $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                    if ($location === null) {
-                        $location = new Location();
-                        $location->setCity($brno);
-                        $location->setStreet($street);
-                        $location->setLatitude($latitude);
-                        $location->setLongitude($longitude);
-                    }
-
+                $property = $existingAdvert
+                    ? $existingAdvert->getProperty()
+                    : $this->propertyRepository->findProperty();
+                if ($property === null) {
                     $property = new Property();
                     $property->setType($propertyTypeMap[$propertyType]);
-                    $property->setLocation($location);
-
-                    $images = [];
-                    $thumbnailNodes = (array)$mainNode->find('div.fliobal div.flinavigace img');
-                    $imageNodes = (array)$mainNode->find('div.fliobal img.carousel-cell-image');
-                    for ($i = 0; $i < min([count($thumbnailNodes), count($imageNodes)]); $i++) {
-                        $imageNode = $imageNodes[$i];
-                        $thumbnailNode = $thumbnailNodes[$i];
-                        $image = trim($imageNode->{'data-flickity-lazyload'});
-                        $thumbnail = trim($thumbnailNode->src);
-                        if (empty($image) || empty($thumbnail)) {
-                            continue;
-                        }
-                        $tmp = new \stdClass();
-                        $tmp->image = $image;
-                        $tmp->thumbnail = $thumbnail;
-                        $images[] = $tmp;
-                    }
-                    $property->setImages($images);
-
-                    $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
                 }
+
+                $description = $streetNode = $street = $latitude = $longitude = null;
+                $descriptionNode = $mainNode->find('div.popisdetail', 0);
+                if ($descriptionNode) {
+                    $description = $this->normalizeHtmlString($descriptionNode->innertext);
+                }
+                $itemsNodes = (array)$mainNode->find('td.listadvlevo', 0)->find('table', 0)->find('tr');
+                foreach ($itemsNodes as $itemNode) {
+                    $itemHeadingNode = $itemNode->find('td', 0);
+                    if (!$itemHeadingNode) {
+                        continue;
+                    }
+                    $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
+                    switch (mb_strtolower($itemHeading)) {
+                        case 'lokalita':
+                            $streetNode = $itemNode->find('td', 2);
+                            break;
+                    }
+                }
+                
+                if ($streetNode) {
+                    $streetHrefNode = $streetNode->find('a', 0);
+                    if ($streetHrefNode) {
+                        $street = trim($streetHrefNode->innertext);
+                        $mapUrlPathParts = [];
+                        $mapHref = $streetHrefNode->href;
+                        $mapUrlParts = parse_url($mapHref);
+                        if ($mapUrlParts !== false && isset($mapUrlParts['path'])) {
+                            $mapUrlPathParts = explode('/', $mapUrlParts['path']);
+                        }
+                        if (isset($mapUrlPathParts[3])) {
+                            $gps = explode(',', $mapUrlPathParts[3]);
+                            $latitude = floatval($gps[0]);
+                            $longitude = floatval($gps[1]);
+                        }
+                    }
+                }
+                $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
+                if ($location === null) {
+                    $location = new Location();
+                    $location->setCity($brno);
+                    $location->setStreet($street);
+                    $location->setLatitude($latitude);
+                    $location->setLongitude($longitude);
+                }
+                $property->setLocation($location);
+
+                $images = [];
+                $thumbnailNodes = (array)$mainNode->find('div.fliobal div.flinavigace img');
+                $imageNodes = (array)$mainNode->find('div.fliobal img.carousel-cell-image');
+                for ($i = 0; $i < min([count($thumbnailNodes), count($imageNodes)]); $i++) {
+                    $imageNode = $imageNodes[$i];
+                    $thumbnailNode = $thumbnailNodes[$i];
+                    $image = trim($imageNode->{'data-flickity-lazyload'});
+                    $thumbnail = trim($thumbnailNode->src);
+                    if (empty($image) || empty($thumbnail)) {
+                        continue;
+                    }
+                    $tmp = new \stdClass();
+                    $tmp->image = $image;
+                    $tmp->thumbnail = $thumbnail;
+                    $images[] = $tmp;
+                }
+                $property->setImages($images);
+                if (empty($images)) {
+                    continue;
+                }
+
+                $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);
@@ -238,9 +250,14 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 if ($priceNode) {
                     $priceRaw = trim(strip_tags($priceNode->innertext));
-                    $price = intval(str_replace(['.', ' ', 'Kč'], ['', '', ''], $priceRaw));
-                    $advert->setPrice($price);
+                    $price = intval(preg_replace('/\D/', '', $priceRaw));
+                    if ($price > 0) {
+                        $advert->setPrice($price);
+                    }
                     $advert->setCurrency('CZK');
+                }
+                if ($existingAdvert) {
+                    $advert->setPreviousPrice($existingAdvert->getPrice());
                 }
 
                 $this->assignCityDistrict($advert);

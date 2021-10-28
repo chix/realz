@@ -13,5 +13,5 @@ interface CrawlerInterface
     /**
      * @return Advert[]
      */
-    public function getNewAdverts(string $advertType, string $propertyType): array;
+    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode): array;
 }

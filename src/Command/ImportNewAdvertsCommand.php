@@ -29,6 +29,18 @@ final class ImportNewAdvertsCommand extends Command
     protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos', 'ceskereality', 'ulovdomov'];
 
     /**
+     * @var array<string,int>
+     */
+    protected static $supportedCities = [
+        'brno' => 582786,
+        'olomouc' => 500496,
+        'pardubice' => 555134,
+        'hradec' => 569810,
+        'hradiste' => 592005,
+        'nachod' => 573868,
+    ];
+
+    /**
      * @var EntityManagerInterface
      */
     protected $entityManager;
@@ -89,10 +101,16 @@ final class ImportNewAdvertsCommand extends Command
         $this
             ->setDescription('Import new adverts.')
             ->addOption(
-                'crawlers',
-                'c',
+                'sources',
+                's',
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
-                'Limit crawlers, allowed values: ' . implode(', ', self::$activeCrawlers)
+                'Limit sources, allowed values: ' . implode(', ', self::$activeCrawlers)
+            )
+            ->addOption(
+                'city',
+                'c',
+                InputOption::VALUE_REQUIRED,
+                'Limit city, allowed values: ' . implode(', ', array_keys(self::$supportedCities))
             )
         ;
     }
@@ -100,14 +118,19 @@ final class ImportNewAdvertsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): ?int
     {
         $crawlers = [];
-        /** @var string[] $crawlersInput */
-        $crawlersInput = $input->getOption('crawlers');
-        foreach ($crawlersInput as $code) {
+        /** @var string[] $sources */
+        $sources = $input->getOption('sources');
+        foreach ($sources as $code) {
             if (in_array($code, self::$activeCrawlers)) {
                 $crawlers[] = $this->{$code.'Crawler'};
             } else {
                 $output->writeln(sprintf('<comment>Crawler "%s" not found.</comment>', $code));
             }
+        }
+        /** @var string|null $city */
+        $city = $input->getOption('city');
+        if ($city !== null && !array_key_exists($city, self::$supportedCities)) {
+            $output->writeln(sprintf('<comment>City "%s" not supported.</comment>', $city));
         }
         if (empty($crawlers)) {
             if (!empty($crawlersInput)) {
@@ -121,10 +144,10 @@ final class ImportNewAdvertsCommand extends Command
         }
 
         foreach ($crawlers as $crawler) { /** @var CrawlerInterface $crawler */
-            $this->logger->debug('Starting ' . $crawler->getIdentifier());
+            $this->logger->debug('Starting ' . $crawler->getIdentifier(), ($city) ? [$city] : []);
 
-            $adverts = $crawler->getNewAdverts(AdvertType::TYPE_SALE, PropertyType::TYPE_FLAT);
-            $adverts = array_merge($adverts, $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT));
+            $adverts = $crawler->getNewAdverts(AdvertType::TYPE_SALE, PropertyType::TYPE_FLAT, $city ? self::$supportedCities[$city] : null);
+            $adverts = array_merge($adverts, $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT, $city ? self::$supportedCities[$city] : null));
 
             $this->logger->debug(count($adverts) . ' new ads found');
 

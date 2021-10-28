@@ -86,7 +86,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(string $advertType, string $propertyType): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $ceskerealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_CESKEREALITY);
         $advertTypeMap = $this->getAdvertTypeMap();
@@ -130,7 +130,18 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 $detailUrl = trim($detailUrlNode->getAttribute('href'));
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if ($existingAdvert !== null) {
-                    continue;
+                    $currentPrice = null;
+
+                    $priceNode = $node->find('.nemovitost_info .cena', 0);
+                    if ($priceNode) {
+                        $priceRaw = trim(strip_tags($priceNode->innertext));
+                        $currentPrice = intval(preg_replace('/\D/', '', $priceRaw));
+                    }
+
+                    $existingPrice = $existingAdvert->getPrice();
+                    if ((int)$currentPrice === (int)$existingPrice) {
+                        continue;
+                    }
                 }
 
                 try {
@@ -150,7 +161,43 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                $property = $this->propertyRepository->findProperty();
+                $property = $existingAdvert
+                    ? $existingAdvert->getProperty()
+                    : $this->propertyRepository->findProperty();
+                if ($property === null) {
+                    $property = new Property();
+                    $property->setType($propertyTypeMap[$propertyType]);
+                }
+
+                $street = $latitude = $longitude = null;
+                $streetNode = $mainNode->find('div.title h2', 0);
+                if ($streetNode) {
+                    $street = trim($streetNode->innertext);
+                }
+                $mapIframeNode = $mainNode->find('iframe[data-block-name=map-canvas]', 0);
+                if ($mapIframeNode) {
+                    $iframeUrlQuery = [];
+                    $iframeSrc = $mapIframeNode->src;
+                    $iframeUrlParts = parse_url($iframeSrc);
+                    if ($iframeUrlParts !== false && isset($iframeUrlParts['query'])) {
+                        parse_str($iframeUrlParts['query'], $iframeUrlQuery);
+                    }
+                    if (isset($iframeUrlQuery['q'])) {
+                        $gps = explode(',', $iframeUrlQuery['q']);
+                        $latitude = floatval($gps[0]);
+                        $longitude = floatval($gps[1]);
+                    }
+                }
+                $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
+                if ($location === null) {
+                    $location = new Location();
+                    $location->setCity($brno);
+                    $location->setStreet($street);
+                    $location->setLatitude($latitude);
+                    $location->setLongitude($longitude);
+                }
+                $property->setLocation($location);
+
                 $title = trim(strip_tags((string)$mainNode->find('div.title h1', 0)->innertext));
                 $description = null;
                 $possibleDescriptionNodes = $mainNode->find('div.row h3');
@@ -160,91 +207,55 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     }
                     $description = $this->normalizeHtmlString($descriptionNode->parent->innertext);
                 }
-                if ($property !== null) {
-                } else {
-                    $street = $latitude = $longitude = null;
-                    
-                    $streetNode = $mainNode->find('div.title h2', 0);
-                    if ($streetNode) {
-                        $street = trim($streetNode->innertext);
-                    }
-                    $mapIframeNode = $mainNode->find('iframe[data-block-name=map-canvas]', 0);
-                    if ($mapIframeNode) {
-                        $iframeUrlQuery = [];
-                        $iframeSrc = $mapIframeNode->src;
-                        $iframeUrlParts = parse_url($iframeSrc);
-                        if ($iframeUrlParts !== false && isset($iframeUrlParts['query'])) {
-                            parse_str($iframeUrlParts['query'], $iframeUrlQuery);
-                        }
-                        if (isset($iframeUrlQuery['q'])) {
-                            $gps = explode(',', $iframeUrlQuery['q']);
-                            $latitude = floatval($gps[0]);
-                            $longitude = floatval($gps[1]);
-                        }
-                    }
-                    $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                    if ($location === null) {
-                        $location = new Location();
-                        $location->setCity($brno);
-                        $location->setStreet($street);
-                        $location->setLatitude($latitude);
-                        $location->setLongitude($longitude);
-                    }
+                $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
 
-                    $property = new Property();
-                    $property->setType($propertyTypeMap[$propertyType]);
-                    $property->setLocation($location);
-
-                    $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
-
-                    $itemNodes = (array)$mainNode->find('div.row div.info-table div.item');
-                    foreach ($itemNodes as $itemNode) {
-                        $itemHeading = '';
-                        $itemValue = '';
-                        $itemHeadingNode = $itemNode->find('div.name', 0);
-                        $itemValueNode = $itemNode->find('div.value', 0);
-                        if ($itemHeadingNode) {
-                            $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
-                        }
-                        if ($itemValueNode) {
-                            $itemValue = trim(strip_tags($itemValueNode->innertext));
-                        }
-                        switch (mb_strtolower($itemHeading)) {
-                            case 'typ konstrukce':
-                            case 'konstrukce':
-                                if (in_array(mb_strtolower($itemValue), ['panelová'])) {
-                                    $property->setConstruction($constructionPanel);
-                                } elseif (in_array(mb_strtolower($itemValue), ['zděná'])) {
-                                    $property->setConstruction($constructionBrick);
-                                }
-                                break;
-                            case 'užitná plocha':
-                            case 'plocha užitná':
-                            case 'plocha obytná':
-                            case 'obytná plocha':
-                                $area = str_replace([' ', 'm2'], ['', ''], $itemValue);
-                                $property->setArea(intval($area));
-                                break;
-                            case 'vlastnictví':
-                                $property->setOwnership($itemValue);
-                                break;
-                            case 'patro':
-                                $property->setFloor(intval($itemValue));
-                                break;
-                        }
+                $itemNodes = (array)$mainNode->find('div.row div.info-table div.item');
+                foreach ($itemNodes as $itemNode) {
+                    $itemHeading = '';
+                    $itemValue = '';
+                    $itemHeadingNode = $itemNode->find('div.name', 0);
+                    $itemValueNode = $itemNode->find('div.value', 0);
+                    if ($itemHeadingNode) {
+                        $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
                     }
-
-                    $images = [];
-                    $imageHrefNodes = (array)$mainNode->find('div#media-window div.media-slide a.cbox');
-                    foreach ($imageHrefNodes as $imageHrefNode) {
-                        $imageSrc = $imageHrefNode->getAttribute('href');
-                        $tmp = new \stdClass();
-                        $tmp->image = $imageSrc;
-                        $tmp->thumbnail = $imageSrc;
-                        $images[] = $tmp;
+                    if ($itemValueNode) {
+                        $itemValue = trim(strip_tags($itemValueNode->innertext));
                     }
-                    $property->setImages($images);
+                    switch (mb_strtolower($itemHeading)) {
+                        case 'typ konstrukce':
+                        case 'konstrukce':
+                            if (in_array(mb_strtolower($itemValue), ['panelová'])) {
+                                $property->setConstruction($constructionPanel);
+                            } elseif (in_array(mb_strtolower($itemValue), ['zděná'])) {
+                                $property->setConstruction($constructionBrick);
+                            }
+                            break;
+                        case 'užitná plocha':
+                        case 'plocha užitná':
+                        case 'plocha obytná':
+                        case 'obytná plocha':
+                            $area = str_replace([' ', 'm2'], ['', ''], $itemValue);
+                            $property->setArea(intval($area));
+                            break;
+                        case 'vlastnictví':
+                            $property->setOwnership($itemValue);
+                            break;
+                        case 'patro':
+                            $property->setFloor(intval($itemValue));
+                            break;
+                    }
                 }
+
+                $images = [];
+                $imageHrefNodes = (array)$mainNode->find('div#media-window div.media-slide a.cbox');
+                foreach ($imageHrefNodes as $imageHrefNode) {
+                    $imageSrc = $imageHrefNode->getAttribute('href');
+                    $tmp = new \stdClass();
+                    $tmp->image = $imageSrc;
+                    $tmp->thumbnail = $imageSrc;
+                    $images[] = $tmp;
+                }
+                $property->setImages($images);
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);
@@ -259,6 +270,9 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     $price = intval(trim($priceNode->content));
                     $advert->setPrice($price);
                     $advert->setCurrency('CZK');
+                }
+                if ($existingAdvert) {
+                    $advert->setPreviousPrice($existingAdvert->getPrice());
                 }
 
                 $this->assignCityDistrict($advert);

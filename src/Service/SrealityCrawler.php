@@ -117,7 +117,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
     /**
      * @inheritDoc
      */
-    public function getNewAdverts(string $advertType, string $propertyType): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
         $advertTypeMap = $this->getAdvertTypeMap();
@@ -144,13 +144,16 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
 
         $adverts = [];
-        foreach (self::CONFIG as $cityCode => $cityConfig) {
+        foreach (self::CONFIG as $code => $cityConfig) {
+            if ($cityCode && $code !== $cityCode) {
+                continue;
+            }
             if (isset($cityConfig[$advertType]) && !$cityConfig[$advertType]) {
                 continue;
             }
-            $city = $this->cityRepository->findOneByCode($cityCode);
+            $city = $this->cityRepository->findOneByCode($code);
             if (!$city) {
-                $this->logger->debug('Could not load city: ' . $cityCode);
+                $this->logger->debug('Could not load city: ' . $code);
                 continue;
             }
             $page = 1;
@@ -204,90 +207,90 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $property = $existingAdvert
                         ? $existingAdvert->getProperty()
                         : $this->propertyRepository->findProperty();
-                    if ($property !== null) {
-                    } else {
-                        $street = $latitude = $longitude = null;
-                        if (!empty($adDetail['locality'])) {
-                            $street = $adDetail['locality']['value'];
-                        }
-                        if (!empty($adDetail['map']) && isset($adDetail['map']['lat']) && isset($adDetail['map']['lon'])) {
-                            $latitude = $adDetail['map']['lat'];
-                            $longitude = $adDetail['map']['lon'];
-                        }
-                        $location = $this->locationRepository->findLocation($city, $street, $latitude, $longitude);
-                        if ($location === null) {
-                            $location = new Location();
-                            $location->setCity($city);
-                            $location->setStreet($street);
-                            $location->setLatitude($latitude);
-                            $location->setLongitude($longitude);
-                        }
-
+                    if ($property === null) {
                         $property = new Property();
                         $property->setType($propertyTypeMap[$propertyType]);
-                        if (isset($dispositionMap[$adDetail['seo']['category_sub_cb']])) {
-                            $property->setDisposition($dispositionMap[$adDetail['seo']['category_sub_cb']]);
-                        } else {
-                            $property->setDisposition($dispositionMap[16]);
-                        }
-                        $property->setLocation($location);
-                        foreach ($adDetail['items'] as $item) {
-                            switch (mb_strtolower($item['name'])) {
-                                case 'stavba':
-                                    if (in_array(mb_strtolower($item['value']), ['panelová'])) {
-                                        $property->setConstruction($constructionPanel);
-                                    } elseif (in_array(mb_strtolower($item['value']), ['cihlová'])) {
-                                        $property->setConstruction($constructionBrick);
-                                    }
-                                    break;
-                                case 'užitná plocha':
-                                    $property->setArea(intval($item['value']));
-                                    break;
-                                case 'plocha podlahová':
-                                    if ($property->getArea() === null) {
-                                        $property->setArea(intval($item['value']));
-                                    }
-                                    break;
-                                case 'vlastnictví':
-                                    $property->setOwnership($item['value']);
-                                    break;
-                                case 'podlaží':
-                                    $dotPosition = mb_stripos($item['value'], '.');
-                                    if ($dotPosition !== false) {
-                                        $property->setFloor(intval(mb_substr($item['value'], 0, $dotPosition)));
-                                    }
-                                    break;
-                                case 'balkón':
-                                    $property->setBalcony((boolean)$item['value']);
-                                    break;
-                                case 'terasa':
-                                    $property->setTerrace((boolean)$item['value']);
-                                    break;
-                                case 'lodžie':
-                                    $property->setLoggia((boolean)$item['value']);
-                                    break;
-                                case 'výtah':
-                                    $property->setElevator((boolean)$item['value']);
-                                    break;
-                                case 'parkování':
-                                    $property->setParking((boolean)$item['value']);
-                                    break;
-                            }
-                        }
-                        $images = [];
-                        if (!empty($adDetail['_embedded']['images'])) {
-                            foreach ($adDetail['_embedded']['images'] as $image) {
-                                if (empty($image['_links']) || empty($image['_links']['view']) || empty($image['_links']['gallery'])) {
-                                    continue;
-                                }
-                                $tmp = new \stdClass();
-                                $tmp->image = $image['_links']['view']['href'];
-                                $tmp->thumbnail = $image['_links']['gallery']['href'];
-                                $images[] = $tmp;
-                            }
-                        }
-                        $property->setImages($images);
                     }
+
+                    $street = $latitude = $longitude = null;
+                    if (!empty($adDetail['locality'])) {
+                        $street = $adDetail['locality']['value'];
+                    }
+                    if (!empty($adDetail['map']) && isset($adDetail['map']['lat']) && isset($adDetail['map']['lon'])) {
+                        $latitude = $adDetail['map']['lat'];
+                        $longitude = $adDetail['map']['lon'];
+                    }
+                    $location = $this->locationRepository->findLocation($city, $street, $latitude, $longitude);
+                    if ($location === null) {
+                        $location = new Location();
+                        $location->setCity($city);
+                        $location->setStreet($street);
+                        $location->setLatitude($latitude);
+                        $location->setLongitude($longitude);
+                    }
+                    $property->setLocation($location);
+
+                    if (isset($dispositionMap[$adDetail['seo']['category_sub_cb']])) {
+                        $property->setDisposition($dispositionMap[$adDetail['seo']['category_sub_cb']]);
+                    } else {
+                        $property->setDisposition($dispositionMap[16]);
+                    }
+                    foreach ($adDetail['items'] as $item) {
+                        switch (mb_strtolower($item['name'])) {
+                            case 'stavba':
+                                if (in_array(mb_strtolower($item['value']), ['panelová'])) {
+                                    $property->setConstruction($constructionPanel);
+                                } elseif (in_array(mb_strtolower($item['value']), ['cihlová'])) {
+                                    $property->setConstruction($constructionBrick);
+                                }
+                                break;
+                            case 'užitná plocha':
+                                $property->setArea(intval($item['value']));
+                                break;
+                            case 'plocha podlahová':
+                                if ($property->getArea() === null) {
+                                    $property->setArea(intval($item['value']));
+                                }
+                                break;
+                            case 'vlastnictví':
+                                $property->setOwnership($item['value']);
+                                break;
+                            case 'podlaží':
+                                $dotPosition = mb_stripos($item['value'], '.');
+                                if ($dotPosition !== false) {
+                                    $property->setFloor(intval(mb_substr($item['value'], 0, $dotPosition)));
+                                }
+                                break;
+                            case 'balkón':
+                                $property->setBalcony((boolean)$item['value']);
+                                break;
+                            case 'terasa':
+                                $property->setTerrace((boolean)$item['value']);
+                                break;
+                            case 'lodžie':
+                                $property->setLoggia((boolean)$item['value']);
+                                break;
+                            case 'výtah':
+                                $property->setElevator((boolean)$item['value']);
+                                break;
+                            case 'parkování':
+                                $property->setParking((boolean)$item['value']);
+                                break;
+                        }
+                    }
+                    $images = [];
+                    if (!empty($adDetail['_embedded']['images'])) {
+                        foreach ($adDetail['_embedded']['images'] as $image) {
+                            if (empty($image['_links']) || empty($image['_links']['view']) || empty($image['_links']['gallery'])) {
+                                continue;
+                            }
+                            $tmp = new \stdClass();
+                            $tmp->image = $image['_links']['view']['href'];
+                            $tmp->thumbnail = $image['_links']['gallery']['href'];
+                            $images[] = $tmp;
+                        }
+                    }
+                    $property->setImages($images);
 
                     $advert = new Advert();
                     $advert->setType($advertTypeMap[$advertType]);
