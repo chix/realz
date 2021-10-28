@@ -151,7 +151,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $property = $this->propertyRepository->findProperty();
-                $title = trim(strip_tags($mainNode->find('div.title h1', 0)->innertext));
+                $title = trim(strip_tags((string)$mainNode->find('div.title h1', 0)->innertext));
                 $description = null;
                 $possibleDescriptionNodes = $mainNode->find('div.row h3');
                 foreach ($possibleDescriptionNodes as $descriptionNode) {

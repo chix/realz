@@ -22,7 +22,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
  *     normalizationContext={"groups"={"read"}},
  *     attributes={"pagination_items_per_page"=20},
  * )
- * @ApiFilter(SearchFilter::class, properties={"type.code": "exact"})
+ * @ApiFilter(SearchFilter::class, properties={"type.code": "exact", "property.location.city.code": "exact"})
  * @ApiFilter(ExistsFilter::class, properties={"deletedAt"})
  * @ApiFilter(OrderFilter::class, properties={"id": "DESC"})
  */
@@ -40,7 +40,7 @@ class Advert extends BaseEntity
     private $id;
 
     /**
-     * @var AdvertType|null
+     * @var AdvertType
      *
      * @ORM\ManyToOne(targetEntity="AdvertType", inversedBy="adverts")
      *
@@ -134,14 +134,14 @@ class Advert extends BaseEntity
         return $this->id;
     }
 
-    public function setType(?AdvertType $type): self
+    public function setType(AdvertType $type): self
     {
         $this->type = $type;
 
         return $this;
     }
 
-    public function getType(): ?AdvertType
+    public function getType(): AdvertType
     {
         return $this->type;
     }

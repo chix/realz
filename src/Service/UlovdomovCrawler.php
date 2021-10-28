@@ -125,31 +125,33 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                     'Content-Type: application/json',
                 ],
             ]);
-            $json = json_decode($response->getContent(true), true);
+            $list = json_decode($response->getContent(true), true);
         } catch (\Exception $e) {
             $this->logger->debug('Could not load list URL: ' . $this->sourceUrl, $this->constructListPayload($page, $limit));
             exit;
         }
         if ($this->fullCrawl) {
-            $pages = range($page, (int)ceil($json['count'] / $limit));
+            $pages = range($page, (int)ceil($list['count'] / $limit));
         } else {
             $pages = [$page];
         }
 
         $adverts = [];
         foreach ($pages as $page) {
-            try {
-                $response = $this->restClient->request('POST', $this->sourceUrl . '/find', [
-                    'json' => $this->constructListPayload($page, $limit),
-                    'headers' => [
-                        'Accept: application/json',
-                        'Content-Type: application/json',
-                    ],
-                ]);
-                $list = json_decode($response->getContent(true), true);
-            } catch (\Exception $e) {
-                $this->logger->debug('Could not load list URL: ' . $this->sourceUrl, $this->constructListPayload($page, $limit));
-                continue;
+            if ($page > 1) {
+                try {
+                    $response = $this->restClient->request('POST', $this->sourceUrl . '/find', [
+                        'json' => $this->constructListPayload($page, $limit),
+                        'headers' => [
+                            'Accept: application/json',
+                            'Content-Type: application/json',
+                        ],
+                    ]);
+                    $list = json_decode($response->getContent(true), true);
+                } catch (\Exception $e) {
+                    $this->logger->debug('Could not load list URL: ' . $this->sourceUrl, $this->constructListPayload($page, $limit));
+                    continue;
+                }
             }
 
             foreach ($list['offers'] as $ad) {

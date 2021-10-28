@@ -280,7 +280,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
                 $advert->setProperty($property);
-                $advert->setTitle(trim($mainNode->find('div.heading h1.heading__title span', 0)->innertext));
+                $advert->setTitle(trim((string)$mainNode->find('div.heading h1.heading__title span', 0)->innertext));
                 $descriptionNode = $mainNode->find('div.main__container div.b-desc p.b-desc__info', 0);
                 if ($descriptionNode) {
                     $advert->setDescription($this->normalizeHtmlString($descriptionNode->innertext));
