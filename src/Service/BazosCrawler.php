@@ -119,7 +119,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
             }
 
             foreach ($listDomNodes as $node) {
-                $titleNode = $node->find('.inzeratynadpis span.nadpis a', 0);
+                $titleNode = $node->find('.inzeratynadpis h2.nadpis a', 0);
                 if (!$titleNode) {
                     $this->logger->debug('No title node');
                     continue;
