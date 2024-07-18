@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Advert;
 use App\Entity\AdvertType;
+use App\Entity\City;
 use App\Entity\Location;
 use App\Entity\Property;
 use App\Entity\PropertyType;
@@ -14,61 +15,35 @@ use App\Repository\AdvertRepository;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
 use App\Repository\LocationRepository;
-use App\Repository\PropertyRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
+use App\Repository\PropertyRepository;
 use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use simplehtmldom\HtmlDocument;
 use simplehtmldom\HtmlWeb;
 
 final class BazosCrawler extends CrawlerBase implements CrawlerInterface
 {
-    /** @var AdvertRepository */
-    protected $advertRepository;
-
-    /** @var AdvertTypeRepository */
-    protected $advertTypeRepository;
-
-    /** @var CityRepository */
-    protected $cityRepository;
-
-    /** @var LocationRepository */
-    protected $locationRepository;
-
-    /** @var PropertyRepository */
-    protected $propertyRepository;
-
-    /** @var PropertyTypeRepository */
-    protected $propertyTypeRepository;
-
-    /** @var SourceRepository */
-    protected $sourceRepository;
-
     /** @var bool */
     protected $fullCrawl = false;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger,
-        AdvertTypeRepository $advertTypeRepository,
-        PropertyConstructionRepository $propertyConstructionRepository,
-        PropertyDispositionRepository $propertyDispositionRepository,
-        PropertyTypeRepository $propertyTypeRepository,
-        string $sourceUrl,
-        AdvertRepository $advertRepository,
-        CityRepository $cityRepository,
-        LocationRepository $locationRepository,
-        PropertyRepository $propertyRepository,
-        SourceRepository $sourceRepository
+        protected EntityManagerInterface $entityManager,
+        protected LoggerInterface $logger,
+        protected AdvertTypeRepository $advertTypeRepository,
+        protected PropertyConstructionRepository $propertyConstructionRepository,
+        protected PropertyDispositionRepository $propertyDispositionRepository,
+        protected PropertyTypeRepository $propertyTypeRepository,
+        protected string $sourceUrl,
+        private AdvertRepository $advertRepository,
+        private CityRepository $cityRepository,
+        private LocationRepository $locationRepository,
+        private PropertyRepository $propertyRepository,
+        private SourceRepository $sourceRepository
     ) {
-        $this->advertRepository = $advertRepository;
-        $this->cityRepository = $cityRepository;
-        $this->locationRepository = $locationRepository;
-        $this->propertyRepository = $propertyRepository;
-        $this->sourceRepository = $sourceRepository;
-
         parent::__construct(
             $entityManager,
             $logger,
@@ -80,14 +55,12 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $bazosSource = $this->sourceRepository->findOneByCode(Source::SOURCE_BAZOS);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
+        /** @var City $brno */
         $brno = $this->cityRepository->findOneByName('Brno');
 
         $page = 1;
@@ -100,21 +73,22 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
 
         $adverts = [];
         foreach ($pages as $page) {
-            $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType);
+            $listUrl = $this->constructListUrl($advertType, $propertyType, $page, $limit);
             try {
                 $document = new HtmlWeb();
+                /** @var HtmlDocument|null $listDom */
                 $listDom = $document->load($listUrl);
             } catch (\Exception $e) {
-                $this->logger->debug('Could not load list URL: ' . $listUrl . ' ' .$e->getMessage());
+                $this->logger->debug('Could not load list URL: '.$listUrl.' '.$e->getMessage());
                 continue;
             }
-            if (empty($listDom)) {
-                $this->logger->debug('Could not load list URL: ' . $listUrl);
+            if (null === $listDom) {
+                $this->logger->debug('Could not load list URL: '.$listUrl);
                 continue;
             }
-            $listDomNodes = (array)$listDom->find('.inzeraty.inzeratyflex');
+            $listDomNodes = (array) $listDom->find('.inzeraty.inzeratyflex');
             if (empty($listDomNodes)) {
-                $this->logger->debug('Empty nodes on URL: ' . $listUrl);
+                $this->logger->debug('Empty nodes on URL: '.$listUrl);
                 continue;
             }
 
@@ -126,7 +100,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 $title = trim($titleNode->innertext);
                 foreach (['koupím', 'hledám', 'sháním', 'poptávám'] as $ignoredWord) {
-                    if (mb_stristr($title, $ignoredWord) !== false) {
+                    if (false !== mb_stristr($title, $ignoredWord)) {
                         continue 2;
                     }
                 }
@@ -138,25 +112,26 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $detailPath = trim($titleNode->href);
                 $detailUrl = $this->constructDetailUrl($detailPath);
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
-                if ($existingAdvert !== null) {
+                if (null !== $existingAdvert) {
                     $priceRaw = trim(strip_tags($priceNode->innertext));
                     $currentPrice = intval(preg_replace('/\D/', '', $priceRaw));
 
                     $existingPrice = $existingAdvert->getPrice();
-                    if ((int)$currentPrice === (int)$existingPrice) {
+                    if ((int) $currentPrice === (int) $existingPrice) {
                         continue;
                     }
                 }
 
                 try {
                     $document = new HtmlWeb();
+                    /** @var HtmlDocument|null $detailDom */
                     $detailDom = $document->load($detailUrl);
                 } catch (\Exception $e) {
-                    $this->logger->debug('Could not load detail URL: ' . $detailUrl . ' ' . $e->getMessage());
+                    $this->logger->debug('Could not load detail URL: '.$detailUrl.' '.$e->getMessage());
                     continue;
                 }
-                if (empty($detailDom)) {
-                    $this->logger->debug('Could not load detail URL: ' . $detailUrl);
+                if (null === $detailDom) {
+                    $this->logger->debug('Could not load detail URL: '.$detailUrl);
                     continue;
                 }
                 $mainNode = $detailDom->find('div.maincontent', 0);
@@ -164,7 +139,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $property = $existingAdvert
                     ? $existingAdvert->getProperty()
                     : $this->propertyRepository->findProperty();
-                if ($property === null) {
+                if (null === $property) {
                     $property = new Property();
                     $property->setType($propertyTypeMap[$propertyType]);
                 }
@@ -174,7 +149,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 if ($descriptionNode) {
                     $description = $this->normalizeHtmlString($descriptionNode->innertext);
                 }
-                $itemsNodes = (array)$mainNode->find('td.listadvlevo', 0)->find('table', 0)->find('tr');
+                $itemsNodes = (array) $mainNode->find('td.listadvlevo', 0)->find('table', 0)->find('tr');
                 foreach ($itemsNodes as $itemNode) {
                     $itemHeadingNode = $itemNode->find('td', 0);
                     if (!$itemHeadingNode) {
@@ -187,7 +162,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                             break;
                     }
                 }
-                
+
                 if ($streetNode) {
                     $streetHrefNode = $streetNode->find('a', 0);
                     if ($streetHrefNode) {
@@ -195,18 +170,18 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                         $mapUrlPathParts = [];
                         $mapHref = $streetHrefNode->href;
                         $mapUrlParts = parse_url($mapHref);
-                        if ($mapUrlParts !== false && isset($mapUrlParts['path'])) {
+                        if (false !== $mapUrlParts && isset($mapUrlParts['path'])) {
                             $mapUrlPathParts = explode('/', $mapUrlParts['path']);
                         }
                         if (isset($mapUrlPathParts[3])) {
                             $gps = explode(',', $mapUrlPathParts[3]);
-                            $latitude = floatval($gps[0]);
-                            $longitude = floatval($gps[1]);
+                            $latitude = $gps[0];
+                            $longitude = $gps[1];
                         }
                     }
                 }
                 $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                if ($location === null) {
+                if (null === $location) {
                     $location = new Location();
                     $location->setCity($brno);
                     $location->setStreet($street);
@@ -216,9 +191,9 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 $property->setLocation($location);
 
                 $images = [];
-                $thumbnailNodes = (array)$mainNode->find('div.fliobal div.flinavigace img');
-                $imageNodes = (array)$mainNode->find('div.fliobal img.carousel-cell-image');
-                for ($i = 0; $i < min([count($thumbnailNodes), count($imageNodes)]); $i++) {
+                $thumbnailNodes = (array) $mainNode->find('div.fliobal div.flinavigace img');
+                $imageNodes = (array) $mainNode->find('div.fliobal img.carousel-cell-image');
+                for ($i = 0; $i < min([count($thumbnailNodes), count($imageNodes)]); ++$i) {
                     $imageNode = $imageNodes[$i];
                     $thumbnailNode = $thumbnailNodes[$i];
                     $image = trim($imageNode->{'data-flickity-lazyload'});
@@ -236,7 +211,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                     continue;
                 }
 
-                $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
+                $this->loadPropertyFromFulltext($property, $title.' '.$description);
 
                 $advert = new Advert();
                 $advert->setType($advertTypeMap[$advertType]);
@@ -248,14 +223,12 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
                 if ($description) {
                     $advert->setDescription($description);
                 }
-                if ($priceNode) {
-                    $priceRaw = trim(strip_tags($priceNode->innertext));
-                    $price = intval(preg_replace('/\D/', '', $priceRaw));
-                    if ($price > 0) {
-                        $advert->setPrice($price);
-                    }
-                    $advert->setCurrency('CZK');
+                $priceRaw = trim(strip_tags($priceNode->innertext));
+                $price = intval(preg_replace('/\D/', '', $priceRaw));
+                if ($price > 0) {
+                    $advert->setPrice($price);
                 }
+                $advert->setCurrency('CZK');
                 if ($existingAdvert) {
                     $advert->setPreviousPrice($existingAdvert->getPrice());
                 }
@@ -269,7 +242,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page = 1, int $limit = 20, string $advertType, string $propertyType): string
+    protected function constructListUrl(string $advertType, string $propertyType, int $page = 1, int $limit = 20): string
     {
         $advertTypeParamMap = [
             AdvertType::TYPE_SALE => 'prodam',
@@ -290,6 +263,7 @@ final class BazosCrawler extends CrawlerBase implements CrawlerInterface
         if ($page > 1) {
             $url = str_replace('/?', sprintf('/%d/?', ($page - 1) * $limit), $url);
         }
+
         return $url;
     }
 

@@ -4,55 +4,38 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\RegionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="region")
- * @ORM\Entity(repositoryClass="App\Repository\RegionRepository")
- *
- * @UniqueEntity({"code"})
- */
+#[ORM\Table(name: 'region')]
+#[ORM\Entity(repositoryClass: RegionRepository::class)]
+#[UniqueEntity('code')]
 class Region extends BaseEntity
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $name;
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $name;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=255, unique=true)
-     *
-     * @Groups({"read"})
-     */
-    private $code;
+    #[ORM\Column(name: 'code', type: Types::STRING, length: 255, unique: true)]
+    #[Groups(['read'])]
+    private string $code;
 
     /**
      * @var ArrayCollection<int, District>
-     *
-     * @ORM\OneToMany(targetEntity="District", mappedBy="region")
      */
-    private $districts;
+    #[ORM\OneToMany(targetEntity: District::class, mappedBy: 'region')]
+    private Collection $districts;
 
     public function __construct()
     {

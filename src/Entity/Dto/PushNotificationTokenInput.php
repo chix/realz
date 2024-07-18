@@ -2,88 +2,73 @@
 
 namespace App\Entity\Dto;
 
-use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Metadata\ApiProperty;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class PushNotificationTokenInput
 {
-    /**
-     * @var string
-     *
-     * @Assert\NotBlank()
-     * @Assert\Type("string")
-     *
-     * @Groups({"write"})
-     */
-    private $token;
+    #[Assert\NotBlank()]
+    #[Assert\Type('string')]
+    #[Groups(['write'])]
+    private string $token;
+
+    #[Assert\NotNull()]
+    #[Assert\Type('bool')]
+    #[Groups(['write'])]
+    private bool $enabled;
 
     /**
-     * @var bool
-     *
-     * @Assert\NotNull()
-     * @Assert\Type("bool")
-     *
-     * @Groups({"write"})
+     * @var array<mixed>|null
      */
-    private $enabled;
-
-    /**
-     * @var array<mixed>|null $filters
-     *
-     * @Assert\Type("array")
-     *
-     * @Groups({"write"})
-     *
-     * @ApiProperty(
-     *     attributes={
-     *         "openapi_context": {
-     *             "type": "array",
-     *             "items": {
-     *                 "type": "object",
-     *                 "properties": {
-     *                     "cityCode": {
-     *                         "type": "string",
-     *                         "example": "582786"
-     *                     },
-     *                     "advertType": {
-     *                         "type": "string",
-     *                         "enum": {"sale", "rent"}
-     *                     },
-     *                     "price": {
-     *                         "type": "object",
-     *                         "properties": {
-     *                             "lte": {
-     *                                 "type": "number",
-     *                                 "example": 5000000
-     *                             },
-     *                             "gte": {
-     *                                 "type": "number",
-     *                                 "example": 0
-     *                             }
-     *                         }
-     *                     },
-     *                     "disposition": {
-     *                         "type": "array",
-     *                         "items": {
-     *                             "type": "string"
-     *                         },
-     *                         "example": {"1+kk", "1+1", "other"}
-     *                     },
-     *                     "cityDistrict": {
-     *                         "type": "array",
-     *                         "items": {
-     *                             "type": "string"
-     *                         },
-     *                         "example": {"550973", "550990", "unassigned"}
-     *                     }
-     *                 }
-     *             }
-     *         }
-     *     }
-     * )
-     */
-    private $filters;
+    #[Assert\Type('array')]
+    #[Groups(['write'])]
+    #[ApiProperty(
+        openapiContext: [
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'cityCode' => [
+                        'type' => 'string',
+                        'example' => '582786',
+                    ],
+                    'advertType' => [
+                        'type' => 'string',
+                        'enum' => ['sale', 'rent'],
+                    ],
+                    'price' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'lte' => [
+                                'type' => 'number',
+                                'example' => 5000000,
+                            ],
+                            'gte' => [
+                                'type' => 'number',
+                                'example' => 0,
+                            ],
+                        ],
+                    ],
+                    'disposition' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'string',
+                        ],
+                        'example' => ['1+kk', '1+1', 'other'],
+                    ],
+                    'cityDistrict' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'string',
+                        ],
+                        'example' => ['550973', '550990', 'unassigned'],
+                    ],
+                ],
+            ],
+        ],
+    )]
+    private ?array $filters;
 
     public function getToken(): string
     {

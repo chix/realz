@@ -11,8 +11,7 @@ abstract class BaseEntity
 
     public function __construct()
     {
-        $now = new \DateTime();
-        $this->setCreatedAt($now);
-        $this->setUpdatedAt($now);
+        $this->setCreatedAt(new \DateTimeImmutable());
+        $this->setUpdatedAt(new \DateTime());
     }
 }

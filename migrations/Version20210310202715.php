@@ -12,19 +12,18 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20210310202715 extends AbstractMigration
 {
-    public function getDescription() : string
+    public function getDescription(): string
     {
         return '';
     }
 
-    public function up(Schema $schema) : void
+    public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('DROP TABLE migration_versions');
         $this->addSql('DROP INDEX UNIQ_54F1F40B3F46DA1F ON advert');
     }
 
-    public function down(Schema $schema) : void
+    public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE UNIQUE INDEX UNIQ_54F1F40B3F46DA1F ON advert (sourceUrl)');

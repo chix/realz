@@ -8,6 +8,7 @@ use App\Entity\AdvertType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/** @extends ServiceEntityRepository<AdvertType> */
 final class AdvertTypeRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

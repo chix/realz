@@ -4,63 +4,42 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\LocationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="location")
- * @ORM\Entity(repositoryClass="App\Repository\LocationRepository")
- */
+#[ORM\Table(name: 'location')]
+#[ORM\Entity(repositoryClass: LocationRepository::class)]
 class Location extends BaseEntity
 {
     use Traits\Locatable;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="street", type="string", length=255, nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $street;
+    #[ORM\Column(name: 'street', type: Types::STRING, length: 255, nullable: true)]
+    #[Groups(['read'])]
+    private ?string $street;
 
-    /**
-     * @var City|null
-     *
-     * @ORM\ManyToOne(targetEntity="City", inversedBy="locations")
-     *
-     * @Groups({"read"})
-     */
-    private $city;
+    #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'locations')]
+    #[Groups(['read'])]
+    private ?City $city;
 
-    /**
-     * @var CityDistrict|null
-     *
-     * @ORM\ManyToOne(targetEntity="CityDistrict", inversedBy="locations")
-     *
-     * @Groups({"read"})
-     */
-    private $cityDistrict;
+    #[ORM\ManyToOne(targetEntity: CityDistrict::class, inversedBy: 'locations')]
+    #[Groups(['read'])]
+    private ?CityDistrict $cityDistrict;
 
     /**
      * @var ArrayCollection<int, Property>
-     *
-     * @ORM\OneToMany(targetEntity="Property", mappedBy="location")
      */
-    private $properties;
+    #[ORM\OneToMany(targetEntity: Property::class, mappedBy: 'location')]
+    private Collection $properties;
 
     public function __construct()
     {

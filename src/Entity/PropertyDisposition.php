@@ -4,77 +4,63 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PropertyDispositionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="property_disposition")
- * @ORM\Entity(repositoryClass="App\Repository\PropertyDispositionRepository")
- *
- * @UniqueEntity({"code"})
- *
- * @ApiResource(
- *     collectionOperations={"get"},
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- *     attributes={"pagination_enabled"=false},
- * )
- */
+#[ORM\Table(name: 'property_disposition')]
+#[ORM\Entity(repositoryClass: PropertyDispositionRepository::class)]
+#[UniqueEntity('code')]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    paginationEnabled: false,
+)]
 class PropertyDisposition extends BaseEntity
 {
-    const DISPOSITION_1 = '1';
-    const DISPOSITION_1_kk = '1+kk';
-    const DISPOSITION_1_1 = '1+1';
-    const DISPOSITION_2_kk = '2+kk';
-    const DISPOSITION_2_1 = '2+1';
-    const DISPOSITION_3_kk = '3+kk';
-    const DISPOSITION_3_1 = '3+1';
-    const DISPOSITION_4_kk = '4+kk';
-    const DISPOSITION_4_1 = '4+1';
-    const DISPOSITION_5_kk = '5+kk';
-    const DISPOSITION_5_1 = '5+1';
-    const DISPOSITION_6 = '6+';
-    const DISPOSITION_other = 'other';
+    public const DISPOSITION_1 = '1';
+    public const DISPOSITION_1_kk = '1+kk';
+    public const DISPOSITION_1_1 = '1+1';
+    public const DISPOSITION_2_kk = '2+kk';
+    public const DISPOSITION_2_1 = '2+1';
+    public const DISPOSITION_3_kk = '3+kk';
+    public const DISPOSITION_3_1 = '3+1';
+    public const DISPOSITION_4_kk = '4+kk';
+    public const DISPOSITION_4_1 = '4+1';
+    public const DISPOSITION_5_kk = '5+kk';
+    public const DISPOSITION_5_1 = '5+1';
+    public const DISPOSITION_6 = '6+';
+    public const DISPOSITION_other = 'other';
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $name;
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $name;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=255, unique=true)
-     *
-     * @Groups({"read"})
-     */
-    private $code;
+    #[ORM\Column(name: 'code', type: Types::STRING, length: 255, unique: true)]
+    #[Groups(['read'])]
+    private string $code;
 
     /**
      * @var ArrayCollection<int, Property>
-     *
-     * @ORM\OneToMany(targetEntity="Property", mappedBy="disposition")
      */
-    private $properties;
+    #[ORM\OneToMany(targetEntity: Property::class, mappedBy: 'disposition')]
+    private Collection $properties;
 
     public function __construct()
     {

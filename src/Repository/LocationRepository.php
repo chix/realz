@@ -9,6 +9,7 @@ use App\Entity\Location;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/** @extends ServiceEntityRepository<Location> */
 final class LocationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,7 +17,7 @@ final class LocationRepository extends ServiceEntityRepository
         parent::__construct($registry, Location::class);
     }
 
-    public function findLocation(City $city, ?string $street, ?float $latitude, ?float $longitude): ?Location
+    public function findLocation(City $city, ?string $street, ?string $latitude, ?string $longitude): ?Location
     {
         /** @var Location|null $location */
         $location = $this->findOneBy([

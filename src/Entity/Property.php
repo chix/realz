@@ -4,161 +4,87 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
+use App\Repository\PropertyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="property")
- * @ORM\Entity(repositoryClass="App\Repository\PropertyRepository")
- */
+#[ORM\Table(name: 'property')]
+#[ORM\Entity(repositoryClass: PropertyRepository::class)]
 class Property extends BaseEntity
 {
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\ManyToOne(targetEntity: PropertyType::class, inversedBy: 'properties')]
+    #[Groups(['read'])]
+    private ?PropertyType $type;
 
-    /**
-     * @var PropertyType|null
-     *
-     * @ORM\ManyToOne(targetEntity="PropertyType", inversedBy="properties")
-     *
-     * @Groups({"read"})
-     */
-    private $type;
+    #[ORM\ManyToOne(targetEntity: PropertyDisposition::class, inversedBy: 'properties')]
+    #[Groups(['read'])]
+    private ?PropertyDisposition $disposition;
 
-    /**
-     * @var PropertyDisposition|null
-     *
-     * @ORM\ManyToOne(targetEntity="PropertyDisposition", inversedBy="properties")
-     *
-     * @Groups({"read"})
-     */
-    private $disposition;
+    #[ORM\ManyToOne(targetEntity: PropertyConstruction::class, inversedBy: 'properties')]
+    #[Groups(['read'])]
+    private ?PropertyConstruction $construction;
 
-    /**
-     * @var PropertyConstruction|null
-     *
-     * @ORM\ManyToOne(targetEntity="PropertyConstruction", inversedBy="properties")
-     *
-     * @Groups({"read"})
-     */
-    private $construction;
+    #[ORM\ManyToOne(targetEntity: PropertyCondition::class, inversedBy: 'properties')]
+    #[Groups(['read'])]
+    private ?PropertyCondition $condition;
 
-    /**
-     * @var PropertyCondition|null
-     *
-     * @ORM\ManyToOne(targetEntity="PropertyCondition", inversedBy="properties")
-     *
-     * @Groups({"read"})
-     */
-    private $condition;
+    #[ORM\Column(name: 'ownership', type: Types::STRING, length: 255, nullable: true)]
+    #[Groups(['read'])]
+    private ?string $ownership;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="ownership", type="string", length=255, nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $ownership;
+    #[ORM\Column(name: 'floor', type: Types::INTEGER, nullable: true)]
+    #[Groups(['read'])]
+    private ?int $floor;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="floor", type="integer", nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $floor;
+    #[ORM\Column(name: 'area', type: Types::INTEGER, nullable: true)]
+    #[Groups(['read'])]
+    private ?int $area;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="area", type="integer", nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $area;
+    #[ORM\Column(name: 'balcony', type: Types::BOOLEAN, options: ['deafult' => false])]
+    #[Groups(['read'])]
+    private bool $balcony = false;
 
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="balcony", type="boolean", options={"default":"0"})
-     *
-     * @Groups({"read"})
-     */
-    private $balcony = false;
+    #[ORM\Column(name: 'terrace', type: Types::BOOLEAN, options: ['deafult' => false])]
+    #[Groups(['read'])]
+    private bool $terrace = false;
 
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="terrace", type="boolean", options={"default":"0"})
-     *
-     * @Groups({"read"})
-     */
-    private $terrace = false;
+    #[ORM\Column(name: 'elevator', type: Types::BOOLEAN, options: ['deafult' => false])]
+    #[Groups(['read'])]
+    private bool $elevator = false;
 
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="elevator", type="boolean", options={"default":"0"})
-     *
-     * @Groups({"read"})
-     */
-    private $elevator = false;
+    #[ORM\Column(name: 'parking', type: Types::BOOLEAN, options: ['deafult' => false])]
+    #[Groups(['read'])]
+    private bool $parking = false;
 
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="parking", type="boolean", options={"default":"0"})
-     *
-     * @Groups({"read"})
-     */
-    private $parking = false;
+    #[ORM\Column(name: 'loggia', type: Types::BOOLEAN, options: ['deafult' => false])]
+    #[Groups(['read'])]
+    private bool $loggia = false;
 
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="loggia", type="boolean", options={"default":"0"})
-     *
-     * @Groups({"read"})
-     */
-    private $loggia = false;
-
-    /**
-     * @var Location|null
-     *
-     * @ORM\ManyToOne(targetEntity="Location", inversedBy="properties")
-     *
-     * @Groups({"read"})
-     */
-    private $location;
+    #[ORM\ManyToOne(targetEntity: Location::class, inversedBy: 'properties')]
+    #[Groups(['read'])]
+    private ?Location $location;
 
     /**
      * @var ArrayCollection<int, Advert>
-     *
-     * @ORM\OneToMany(targetEntity="Advert", mappedBy="property")
      */
-    private $adverts;
+    #[ORM\OneToMany(targetEntity: Advert::class, mappedBy: 'property')]
+    private Collection $adverts;
 
     /**
-     * @var array<mixed>|null $images
-     *
-     * @ORM\Column(name="images", type="json_array", nullable=true)
-     *
-     * @Groups({"read"})
+     * @var array<mixed>|null
      */
-    private $images = [];
+    #[ORM\Column(name: 'images', type: Types::JSON, nullable: true)]
+    #[Groups(['read'])]
+    private ?array $images = [];
 
     public function __construct()
     {

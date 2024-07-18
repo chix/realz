@@ -6,10 +6,10 @@ namespace App\Command;
 
 use App\Entity\AdvertType;
 use App\Entity\PropertyType;
-use App\Service\CrawlerInterface;
 use App\Service\BazosCrawler;
 use App\Service\BezrealitkyCrawler;
 use App\Service\CeskerealityCrawler;
+use App\Service\CrawlerInterface;
 use App\Service\SrealityCrawler;
 use App\Service\UlovdomovCrawler;
 use Doctrine\ORM\EntityManagerInterface;
@@ -40,59 +40,15 @@ final class ImportNewAdvertsCommand extends Command
         'nachod' => 573868,
     ];
 
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $entityManager;
-
-    /**
-     * @var BazosCrawler
-     */
-    protected $bazosCrawler;
-
-    /**
-     * @var BezrealitkyCrawler
-     */
-    protected $bezrealitkyCrawler;
-
-    /**
-     * @var SrealityCrawler
-     */
-    protected $srealityCrawler;
-
-    /**
-     * @var CeskerealityCrawler
-     */
-    protected $ceskerealityCrawler;
-
-
-    /**
-     * @var UlovdomovCrawler
-     */
-    protected $ulovdomovCrawler;
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger,
-        BazosCrawler $bazosCrawler,
-        BezrealitkyCrawler $bezrealityCrawler,
-        SrealityCrawler $srealityCrawler,
-        CeskerealityCrawler $ceskerealityCrawler,
-        UlovdomovCrawler $ulovdomovCrawler
+        private EntityManagerInterface $entityManager,
+        private LoggerInterface $logger,
+        private BazosCrawler $bazosCrawler,
+        private BezrealitkyCrawler $bezrealitkyCrawler,
+        private SrealityCrawler $srealityCrawler,
+        private CeskerealityCrawler $ceskerealityCrawler,
+        private UlovdomovCrawler $ulovdomovCrawler
     ) {
-        $this->entityManager = $entityManager;
-        $this->logger = $logger;
-        $this->bazosCrawler = $bazosCrawler;
-        $this->bezrealitkyCrawler = $bezrealityCrawler;
-        $this->srealityCrawler = $srealityCrawler;
-        $this->ceskerealityCrawler = $ceskerealityCrawler;
-        $this->ulovdomovCrawler = $ulovdomovCrawler;
-
         parent::__construct();
     }
 
@@ -104,13 +60,13 @@ final class ImportNewAdvertsCommand extends Command
                 'sources',
                 's',
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
-                'Limit sources, allowed values: ' . implode(', ', self::$activeCrawlers)
+                'Limit sources, allowed values: '.implode(', ', self::$activeCrawlers)
             )
             ->addOption(
                 'city',
                 'c',
                 InputOption::VALUE_REQUIRED,
-                'Limit city, allowed values: ' . implode(', ', array_keys(self::$supportedCities))
+                'Limit city, allowed values: '.implode(', ', array_keys(self::$supportedCities))
             )
         ;
     }
@@ -129,11 +85,11 @@ final class ImportNewAdvertsCommand extends Command
         }
         /** @var string|null $city */
         $city = $input->getOption('city');
-        if ($city !== null && !array_key_exists($city, self::$supportedCities)) {
+        if (null !== $city && !array_key_exists($city, self::$supportedCities)) {
             $output->writeln(sprintf('<comment>City "%s" not supported.</comment>', $city));
         }
         if (empty($crawlers)) {
-            if (!empty($crawlersInput)) {
+            if (!empty($sources)) {
                 $output->writeln('<comment>Loading all crawlers.</comment>');
             }
             $crawlers[] = $this->bazosCrawler;
@@ -143,21 +99,21 @@ final class ImportNewAdvertsCommand extends Command
             $crawlers[] = $this->ulovdomovCrawler;
         }
 
-        foreach ($crawlers as $crawler) { /** @var CrawlerInterface $crawler */
-            $this->logger->debug('Starting ' . $crawler->getIdentifier(), ($city) ? [$city] : []);
+        foreach ($crawlers as $crawler) { /* @var CrawlerInterface $crawler */
+            $this->logger->debug('Starting '.$crawler->getIdentifier(), ($city) ? [$city] : []);
 
             $adverts = $crawler->getNewAdverts(AdvertType::TYPE_SALE, PropertyType::TYPE_FLAT, $city ? self::$supportedCities[$city] : null);
             $adverts = array_merge($adverts, $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT, $city ? self::$supportedCities[$city] : null));
 
-            $this->logger->debug(count($adverts) . ' new ads found');
+            $this->logger->debug(count($adverts).' new ads found');
 
             foreach ($adverts as $advert) {
                 $this->entityManager->persist($advert);
                 $property = $advert->getProperty();
-                if ($property !== null) {
+                if (null !== $property) {
                     $this->entityManager->persist($property);
                     $location = $property->getLocation();
-                    if ($location !== null) {
+                    if (null !== $location) {
                         $this->entityManager->persist($location);
                     }
                 }

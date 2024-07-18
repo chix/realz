@@ -18,44 +18,13 @@ final class PushNotificationsSendCommand extends Command
 {
     protected static $defaultName = 'app:push-notifications:send';
 
-    /**
-     * @var EntityManagerInterface
-     */
-    protected $entityManager;
-
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var HttpClientInterface
-     */
-    private $restClient;
-
-    /**
-     * @var string
-     */
-    protected $expoBackendUrl;
-
-    /**
-     * @var PushNotificationTokenRepository
-     */
-    protected $tokenRepository;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        HttpClientInterface $restClient,
-        LoggerInterface $logger,
-        PushNotificationTokenRepository $tokenRepository,
-        string $expoBackendUrl
+        private EntityManagerInterface $entityManager,
+        private HttpClientInterface $restClient,
+        private LoggerInterface $logger,
+        private PushNotificationTokenRepository $tokenRepository,
+        private string $expoBackendUrl
     ) {
-        $this->entityManager = $entityManager;
-        $this->restClient = $restClient;
-        $this->logger = $logger;
-        $this->tokenRepository = $tokenRepository;
-        $this->expoBackendUrl = $expoBackendUrl;
-
         parent::__construct();
     }
 
@@ -84,12 +53,12 @@ final class PushNotificationsSendCommand extends Command
                 $notification->vibrate = true;
                 $notification->to = $activeToken->getToken();
                 $source = $advert->getSource();
-                $notification->title = $advert->getTitle() . ($source ? sprintf(' (%s)', $source->getName()) : '');
+                $notification->title = $advert->getTitle().($source ? sprintf(' (%s)', $source->getName()) : '');
                 $bodyParts = [];
                 if ($advert->getPrice()) {
-                    $bodyParts[] = $advert->getPrice() . $advert->getCurrency();
+                    $bodyParts[] = $advert->getPrice().$advert->getCurrency();
                 }
-                if ($advert->getProperty() !== null && $advert->getProperty()->getLocation() !== null) {
+                if (null !== $advert->getProperty() && null !== $advert->getProperty()->getLocation()) {
                     $bodyParts[] = $advert->getProperty()->getLocation()->getStreet();
                 }
                 $notification->body = implode(', ', $bodyParts);
@@ -102,13 +71,13 @@ final class PushNotificationsSendCommand extends Command
             }
         }
 
-        $this->logger->debug(count($notifications) . ' notifications to be sent');
+        $this->logger->debug(count($notifications).' notifications to be sent');
 
         if (empty($notifications)) {
             return 0;
         }
 
-        //send notifications and mark adverts as already notified (or log delivery error)
+        // send notifications and mark adverts as already notified (or log delivery error)
         try {
             $response = $this->restClient->request('POST', $this->expoBackendUrl, [
                 'json' => $notifications,
@@ -127,18 +96,18 @@ final class PushNotificationsSendCommand extends Command
                     $advert = $advertMap[$notifications[$i]->data->id];
 
                     $this->logger->debug(
-                        'Notification sent to ' . $token->getToken(),
-                        json_decode((string)json_encode($notifications[$i]), true)
+                        'Notification sent to '.$token->getToken(),
+                        json_decode((string) json_encode($notifications[$i]), true)
                     );
 
-                    if ($responseData['status'] === 'error') {
-                        $this->logger->debug('Incrementing error count on ' . $token->getToken(), $responseData);
+                    if ('error' === $responseData['status']) {
+                        $this->logger->debug('Incrementing error count on '.$token->getToken(), $responseData);
                         $token->setErrorCount($token->getErrorCount() + 1);
                     } else {
                         $token->addAdvert($advert);
                     }
                     if ($token->getErrorCount() >= 10) {
-                        $this->logger->debug('Deactivating ' . $token->getToken());
+                        $this->logger->debug('Deactivating '.$token->getToken());
                         $token->setActive(false);
                     }
                     $token->setLastResponse($responseData);

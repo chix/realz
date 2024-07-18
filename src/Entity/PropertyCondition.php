@@ -4,71 +4,57 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PropertyConditionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="property_condition")
- * @ORM\Entity(repositoryClass="App\Repository\PropertyConditionRepository")
- *
- * @UniqueEntity({"code"})
- *
- * @ApiResource(
- *     collectionOperations={"get"},
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- *     attributes={"pagination_enabled"=false},
- * )
- */
+#[ORM\Table(name: 'property_condition')]
+#[ORM\Entity(repositoryClass: PropertyConditionRepository::class)]
+#[UniqueEntity('code')]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    paginationEnabled: false,
+)]
 class PropertyCondition extends BaseEntity
 {
-    const CONDITION_DEVELOPMENT = 'development';
-    const CONDITION_NEW = 'new';
-    const CONDITION_GOOD = 'good';
-    const CONDITION_POOR = 'poor';
-    const CONDITION_RENOVATED = 'renovated';
-    const CONDITION_UNDER_CONSTRUCTION = 'under_construction';
-    const CONDITION_DEMOLITION = 'demolition';
- 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    public const CONDITION_DEVELOPMENT = 'development';
+    public const CONDITION_NEW = 'new';
+    public const CONDITION_GOOD = 'good';
+    public const CONDITION_POOR = 'poor';
+    public const CONDITION_RENOVATED = 'renovated';
+    public const CONDITION_UNDER_CONSTRUCTION = 'under_construction';
+    public const CONDITION_DEMOLITION = 'demolition';
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $name;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=255, unique=true)
-     *
-     * @Groups({"read"})
-     */
-    private $code;
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $name;
+
+    #[ORM\Column(name: 'code', type: Types::STRING, length: 255, unique: true)]
+    #[Groups(['read'])]
+    private string $code;
 
     /**
      * @var ArrayCollection<int, Property>
-     *
-     * @ORM\OneToMany(targetEntity="Property", mappedBy="condition")
      */
-    private $properties;
+    #[ORM\OneToMany(targetEntity: Property::class, mappedBy: 'condition')]
+    private Collection $properties;
 
     public function __construct()
     {

@@ -11,6 +11,7 @@ use App\Entity\PushNotificationToken;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/** @extends ServiceEntityRepository<PushNotificationToken> */
 final class PushNotificationTokenRepository extends ServiceEntityRepository
 {
     /**
@@ -38,10 +39,10 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
      */
     public function getUnnotifiedAdvertsForToken(PushNotificationToken $token): array
     {
-        $oneHourAgo = (new \DateTime())->sub((new \DateInterval('PT1H')))->format('Y-m-d H:i:s');
+        $oneHourAgo = (new \DateTime())->sub(new \DateInterval('PT1H'))->format('Y-m-d H:i:s');
         $ids = $this->getEntityManager()->createQueryBuilder()
             ->select('ad.id')
-            ->from('App:PushNotificationToken', 'pnt')
+            ->from(PushNotificationToken::class, 'pnt')
             ->leftJoin('pnt.adverts', 'ad')
             ->andWhere('pnt.token = :token')
             ->andWhere('ad.createdAt >= :maxAge');
@@ -52,7 +53,7 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
             foreach ($filters as $cityFilters) {
                 $qb = $this->getEntityManager()->createQueryBuilder();
                 $qb->select('a')
-                    ->from('App:Advert', 'a')
+                    ->from(Advert::class, 'a')
                     ->leftJoin('a.type', 'at')
                     ->leftJoin('a.property', 'p')
                     ->leftJoin('p.location', 'l')
@@ -88,7 +89,7 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
                         case 'cityCode':
                             if (!empty($filter)) {
                                 $city = $this->cityRepository->findOneByCode($filter);
-                                if ($city === null) {
+                                if (null === $city) {
                                     continue 2;
                                 }
                                 $qb->leftJoin('l.city', 'c');

@@ -4,79 +4,62 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiFilter;
-use ApiPlatform\Core\Annotation\ApiResource;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\CityDistrictRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="city_district")
- * @ORM\Entity(repositoryClass="App\Repository\CityDistrictRepository")
- *
- * @UniqueEntity({"code"})
- *
- * @ApiResource(
- *     collectionOperations={"get"},
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- * )
- * @ApiFilter(SearchFilter::class, properties={"name": "partial", "city.code": "exact"})
- */
+#[ORM\Table(name: 'city_district')]
+#[ORM\Entity(repositoryClass: CityDistrictRepository::class)]
+#[UniqueEntity('code')]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+)]
+#[ApiFilter(SearchFilter::class, properties: ['name' => 'partial', 'city.code' => 'exact'])]
 class CityDistrict extends BaseEntity
 {
-    const CODE_UNASSIGNED = 'unassigned';
+    public const CODE_UNASSIGNED = 'unassigned';
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $name;
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $name;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=255, unique=true)
-     *
-     * @Groups({"read"})
-     */
-    private $code;
+    #[ORM\Column(name: 'code', type: Types::STRING, length: 255, unique: true)]
+    #[Groups(['read'])]
+    private string $code;
 
-    /**
-     * @var City|null
-     *
-     * @ORM\ManyToOne(targetEntity="City", inversedBy="cityDistricts")
-     */
-    private $city;
+    #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'cityDistricts')]
+    private ?City $city;
 
     /**
      * @var ArrayCollection<int, Location>
-     *
-     * @ORM\OneToMany(targetEntity="Location", mappedBy="cityDistrict")
      */
-    private $locations;
+    #[ORM\OneToMany(targetEntity: Location::class, mappedBy: 'cityDistrict')]
+    private Collection $locations;
 
     /**
-     * @var array<mixed>|null $queries
-     *
-     * @ORM\Column(name="queries", type="json_array", nullable=true)
+     * @var array<mixed>|null
      */
-    private $queries;
+    #[ORM\Column(name: 'queries', type: Types::JSON, nullable: true)]
+    private ?array $queries;
 
     public function __construct()
     {

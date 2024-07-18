@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
-use App\Entity\PropertyType;
 use App\Entity\PropertyCondition;
-use App\Entity\PropertyDisposition;
 use App\Entity\PropertyConstruction;
+use App\Entity\PropertyDisposition;
+use App\Entity\PropertyType;
 use App\Entity\Source;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
@@ -17,15 +17,15 @@ use Doctrine\Migrations\AbstractMigration;
  */
 class Version20170820092404 extends AbstractMigration
 {
-    public function getDescription() : string
+    public function getDescription(): string
     {
         return '';
     }
 
-    public function up(Schema $schema) : void
+    public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql(sprintf(
             'INSERT INTO property_disposition (name, code, created_at, updated_at) VALUES '.
@@ -129,10 +129,10 @@ class Version20170820092404 extends AbstractMigration
         ));
     }
 
-    public function down(Schema $schema) : void
+    public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $this->abortIf('mysql' !== $this->connection->getDatabasePlatform()->getName(), 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql(sprintf(
             'DELETE FROM property_disposition WHERE code IN ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")',

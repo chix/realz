@@ -20,43 +20,15 @@ use Psr\Log\LoggerInterface;
 
 abstract class CrawlerBase
 {
-    /** @var EntityManagerInterface */
-    protected $entityManager;
-
-    /** @var LoggerInterface */
-    protected $logger;
-
-    /** @var AdvertTypeRepository */
-    protected $advertTypeRepository;
-
-    /** @var PropertyConstructionRepository */
-    protected $propertyConstructionRepository;
-
-    /** @var PropertyDispositionRepository */
-    protected $propertyDispositionRepository;
-
-    /** @var PropertyTypeRepository */
-    protected $propertyTypeRepository;
-
-    /** @var string */
-    protected $sourceUrl;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger,
-        AdvertTypeRepository $advertTypeRepository,
-        PropertyConstructionRepository $propertyConstructionRepository,
-        PropertyDispositionRepository $propertyDispositionRepository,
-        PropertyTypeRepository $propertyTypeRepository,
-        string $sourceUrl
+        protected EntityManagerInterface $entityManager,
+        protected LoggerInterface $logger,
+        protected AdvertTypeRepository $advertTypeRepository,
+        protected PropertyConstructionRepository $propertyConstructionRepository,
+        protected PropertyDispositionRepository $propertyDispositionRepository,
+        protected PropertyTypeRepository $propertyTypeRepository,
+        protected string $sourceUrl
     ) {
-        $this->entityManager = $entityManager;
-        $this->logger = $logger;
-        $this->advertTypeRepository = $advertTypeRepository;
-        $this->propertyConstructionRepository = $propertyConstructionRepository;
-        $this->propertyDispositionRepository = $propertyDispositionRepository;
-        $this->propertyTypeRepository = $propertyTypeRepository;
-        $this->sourceUrl = $sourceUrl;
     }
 
     public function getSourceUrl(): string
@@ -74,10 +46,17 @@ abstract class CrawlerBase
      */
     protected function getPropertyTypeMap(): array
     {
+        /** @var PropertyType $flat */
+        $flat = $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT);
+        /** @var PropertyType $house */
+        $house = $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE);
+        /** @var PropertyType $land */
+        $land = $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND);
+
         return [
-            PropertyType::TYPE_FLAT => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_FLAT),
-            PropertyType::TYPE_HOUSE => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_HOUSE),
-            PropertyType::TYPE_LAND => $this->propertyTypeRepository->findOneByCode(PropertyType::TYPE_LAND),
+            PropertyType::TYPE_FLAT => $flat,
+            PropertyType::TYPE_HOUSE => $house,
+            PropertyType::TYPE_LAND => $land,
         ];
     }
 
@@ -86,24 +65,29 @@ abstract class CrawlerBase
      */
     protected function getAdvertTypeMap(): array
     {
+        /** @var AdvertType $sale */
+        $sale = $this->advertTypeRepository->findOneByCode(AdvertType::TYPE_SALE);
+        /** @var AdvertType $rent */
+        $rent = $this->advertTypeRepository->findOneByCode(AdvertType::TYPE_RENT);
+
         return [
-            AdvertType::TYPE_SALE => $this->advertTypeRepository->findOneByCode(AdvertType::TYPE_SALE),
-            AdvertType::TYPE_RENT => $this->advertTypeRepository->findOneByCode(AdvertType::TYPE_RENT),
+            AdvertType::TYPE_SALE => $sale,
+            AdvertType::TYPE_RENT => $rent,
         ];
     }
 
     protected function assignCityDistrict(Advert $advert, string $cityDistrictString = ''): ?CityDistrict
     {
         $property = $advert->getProperty();
-        if ($property === null) {
+        if (null === $property) {
             return null;
         }
         $location = $property->getLocation();
-        if ($location === null) {
+        if (null === $location) {
             return null;
         }
         $city = $location->getCity();
-        if ($city === null) {
+        if (null === $city) {
             return null;
         }
         $cityDistricts = array_reverse($city->getCityDistricts()->toArray());
@@ -112,13 +96,14 @@ abstract class CrawlerBase
         }
         $cityDistrict = $this->findMatchingCityDistrict(
             $cityDistricts,
-            $cityDistrictString . ' ' . $advert->getTitle() . ' ' . $location->getStreet(),
+            $cityDistrictString.' '.$advert->getTitle().' '.$location->getStreet(),
             $advert->getDescription()
         );
-        if ($cityDistrict !== null) {
+        if (null !== $cityDistrict) {
             $location->setCityDistrict($cityDistrict);
             $this->entityManager->persist($location);
         }
+
         return $cityDistrict;
     }
 
@@ -134,21 +119,21 @@ abstract class CrawlerBase
                 continue;
             }
             foreach ($queries as $query) {
-                if (mb_stristr($title, $query) !== false) {
+                if (false !== mb_stristr($title, $query)) {
                     return $cityDistrict;
                 }
             }
         }
-        
+
         // search description
-        if ($description !== null) {
+        if (null !== $description) {
             foreach ($cityDistricts as $cityDistrict) {
                 $queries = $cityDistrict->getQueries();
                 if (empty($queries)) {
                     continue;
                 }
                 foreach ($queries as $query) {
-                    if (mb_stristr($description, $query) !== false) {
+                    if (false !== mb_stristr($description, $query)) {
                         return $cityDistrict;
                     }
                 }
@@ -186,7 +171,7 @@ abstract class CrawlerBase
         ];
         foreach ($constructionMap as $constructionCode => $keywords) {
             foreach ($keywords as $keyword) {
-                if (mb_stristr($fulltext, $keyword) !== false) {
+                if (false !== mb_stristr($fulltext, $keyword)) {
                     $property->setConstruction($this->propertyConstructionRepository->findOneByCode($constructionCode));
                     break 2;
                 }
@@ -195,7 +180,7 @@ abstract class CrawlerBase
 
         foreach ($dispositionKeywordsMap as $code => $keywords) {
             foreach ($keywords as $keyword) {
-                if (mb_stristr($fulltext, $keyword) !== false) {
+                if (false !== mb_stristr($fulltext, $keyword)) {
                     $property->setDisposition($dispositionMap[$code]);
                     break 2;
                 }
@@ -205,23 +190,23 @@ abstract class CrawlerBase
             $property->setDisposition($dispositionMap[PropertyDisposition::DISPOSITION_other]);
         }
 
-        if (mb_stristr($fulltext, 'balkón') !== false) {
+        if (false !== mb_stristr($fulltext, 'balkón')) {
             $property->setBalcony(true);
         }
 
-        if (mb_stristr($fulltext, 'teras') !== false) {
+        if (false !== mb_stristr($fulltext, 'teras')) {
             $property->setTerrace(true);
         }
 
-        if (mb_stristr($fulltext, 'lodži') !== false) {
+        if (false !== mb_stristr($fulltext, 'lodži')) {
             $property->setLoggia(true);
         }
 
-        if (mb_stristr($fulltext, 'výtah') !== false) {
+        if (false !== mb_stristr($fulltext, 'výtah')) {
             $property->setElevator(true);
         }
 
-        if (mb_stristr($fulltext, 'parkov') !== false) {
+        if (false !== mb_stristr($fulltext, 'parkov')) {
             $property->setParking(true);
         }
 
@@ -266,6 +251,7 @@ abstract class CrawlerBase
         curl_setopt($ch, CURLOPT_HEADER, 0);
         $content = curl_exec($ch);
         curl_close($ch);
+
         return is_string($content) ? $content : null;
     }
 
@@ -273,6 +259,7 @@ abstract class CrawlerBase
     {
         $withoutBRs = str_ireplace(['<br>', '<br />', '<br/>'], "\r\n", $html);
         $withoutTags = strip_tags($withoutBRs);
+
         return trim($withoutTags);
     }
 }

@@ -16,9 +16,9 @@ use App\Repository\AdvertRepository;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
 use App\Repository\LocationRepository;
-use App\Repository\PropertyRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
+use App\Repository\PropertyRepository;
 use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,7 +26,7 @@ use Psr\Log\LoggerInterface;
 
 final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 {
-    const CONFIG = [
+    public const CONFIG = [
         '582786' => [ // Brno
             'region_id' => 14,
             'district_id' => 72,
@@ -59,50 +59,23 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         ],
     ];
 
-    /** @var AdvertRepository */
-    protected $advertRepository;
-
-    /** @var AdvertTypeRepository */
-    protected $advertTypeRepository;
-
-    /** @var CityRepository */
-    protected $cityRepository;
-
-    /** @var LocationRepository */
-    protected $locationRepository;
-
-    /** @var PropertyRepository */
-    protected $propertyRepository;
-
-    /** @var PropertyTypeRepository */
-    protected $propertyTypeRepository;
-
-    /** @var SourceRepository */
-    protected $sourceRepository;
-
     /** @var bool */
     protected $fullCrawl = false;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger,
-        AdvertTypeRepository $advertTypeRepository,
-        PropertyConstructionRepository $propertyConstructionRepository,
-        PropertyDispositionRepository $propertyDispositionRepository,
-        string $sourceUrl,
-        AdvertRepository $advertRepository,
-        CityRepository $cityRepository,
-        LocationRepository $locationRepository,
-        PropertyRepository $propertyRepository,
-        PropertyTypeRepository $propertyTypeRepository,
-        SourceRepository $sourceRepository
+        protected EntityManagerInterface $entityManager,
+        protected LoggerInterface $logger,
+        protected AdvertTypeRepository $advertTypeRepository,
+        protected PropertyConstructionRepository $propertyConstructionRepository,
+        protected PropertyDispositionRepository $propertyDispositionRepository,
+        protected PropertyTypeRepository $propertyTypeRepository,
+        protected string $sourceUrl,
+        private AdvertRepository $advertRepository,
+        private CityRepository $cityRepository,
+        private LocationRepository $locationRepository,
+        private PropertyRepository $propertyRepository,
+        private SourceRepository $sourceRepository
     ) {
-        $this->advertRepository = $advertRepository;
-        $this->cityRepository = $cityRepository;
-        $this->locationRepository = $locationRepository;
-        $this->propertyRepository = $propertyRepository;
-        $this->sourceRepository = $sourceRepository;
-
         parent::__construct(
             $entityManager,
             $logger,
@@ -114,32 +87,26 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
         $dispositionMap = [
-            1 => PropertyDisposition::DISPOSITION_1,
-            2 => PropertyDisposition::DISPOSITION_1_kk,
-            3 => PropertyDisposition::DISPOSITION_1_1,
-            4 => PropertyDisposition::DISPOSITION_2_kk,
-            5 => PropertyDisposition::DISPOSITION_2_1,
-            6 => PropertyDisposition::DISPOSITION_3_kk,
-            7 => PropertyDisposition::DISPOSITION_3_1,
-            8 => PropertyDisposition::DISPOSITION_4_kk,
-            9 => PropertyDisposition::DISPOSITION_4_1,
-            10 => PropertyDisposition::DISPOSITION_5_kk,
-            11 => PropertyDisposition::DISPOSITION_5_1,
-            12 => PropertyDisposition::DISPOSITION_6,
-            16 => PropertyDisposition::DISPOSITION_other,
+            1 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1),
+            2 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_kk),
+            3 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_1),
+            4 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_kk),
+            5 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_1),
+            6 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_kk),
+            7 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_1),
+            8 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_kk),
+            9 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_1),
+            10 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_5_kk),
+            11 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_5_1),
+            12 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
+            16 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_other),
         ];
-        foreach ($dispositionMap as $key => $code) {
-            $dispositionMap[$key] = $this->propertyDispositionRepository->findOneByCode($code);
-        }
         $constructionBrick = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_BRICK);
         $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
 
@@ -153,19 +120,19 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
             }
             $city = $this->cityRepository->findOneByCode($code);
             if (!$city) {
-                $this->logger->debug('Could not load city: ' . $code);
+                $this->logger->debug('Could not load city: '.$code);
                 continue;
             }
             $page = 1;
             $limit = 20;
             $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType, $cityConfig['region_id'], $cityConfig['district_id']);
-            $list = json_decode((string)file_get_contents($listUrl), true);
+            $list = json_decode((string) file_get_contents($listUrl), true);
             if (empty($list)) {
-                $this->logger->debug('Could not load list URL: ' . $listUrl);
+                $this->logger->debug('Could not load list URL: '.$listUrl);
                 continue;
             }
             if ($this->fullCrawl) {
-                $pages = range($page, (int)ceil($list['result_size'] / $limit));
+                $pages = range($page, (int) ceil($list['result_size'] / $limit));
             } else {
                 $pages = [$page];
             }
@@ -173,10 +140,10 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
             foreach ($pages as $page) {
                 if ($page > 1) {
                     $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType, $cityConfig['region_id'], $cityConfig['district_id']);
-                    $list = json_decode((string)file_get_contents($listUrl), true);
+                    $list = json_decode((string) file_get_contents($listUrl), true);
 
                     if (empty($list)) {
-                        $this->logger->debug('Could not load list URL: ' . $listUrl);
+                        $this->logger->debug('Could not load list URL: '.$listUrl);
                         continue;
                     }
                 }
@@ -189,7 +156,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                     if ($existingAdvert) {
                         $currentPrice = null;
-                        if (!empty($ad['price_czk']) && $ad['price_czk']['value_raw'] !== 1) {
+                        if (!empty($ad['price_czk']) && 1 !== $ad['price_czk']['value_raw']) {
                             $currentPrice = $ad['price_czk']['value_raw'];
                         }
                         $existingPrice = $existingAdvert->getPrice();
@@ -198,16 +165,16 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                         }
                     }
 
-                    $adDetail = json_decode((string)file_get_contents($detailUrl), true);
+                    $adDetail = json_decode((string) file_get_contents($detailUrl), true);
                     if (empty($adDetail)) {
-                        $this->logger->debug('Could not load detail URL: ' . $detailUrl, [$ad['hash_id']]);
+                        $this->logger->debug('Could not load detail URL: '.$detailUrl, [$ad['hash_id']]);
                         continue;
                     }
 
                     $property = $existingAdvert
                         ? $existingAdvert->getProperty()
                         : $this->propertyRepository->findProperty();
-                    if ($property === null) {
+                    if (null === $property) {
                         $property = new Property();
                         $property->setType($propertyTypeMap[$propertyType]);
                     }
@@ -221,7 +188,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                         $longitude = $adDetail['map']['lon'];
                     }
                     $location = $this->locationRepository->findLocation($city, $street, $latitude, $longitude);
-                    if ($location === null) {
+                    if (null === $location) {
                         $location = new Location();
                         $location->setCity($city);
                         $location->setStreet($street);
@@ -248,7 +215,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                                 $property->setArea(intval($item['value']));
                                 break;
                             case 'plocha podlahová':
-                                if ($property->getArea() === null) {
+                                if (null === $property->getArea()) {
                                     $property->setArea(intval($item['value']));
                                 }
                                 break;
@@ -257,24 +224,24 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                                 break;
                             case 'podlaží':
                                 $dotPosition = mb_stripos($item['value'], '.');
-                                if ($dotPosition !== false) {
+                                if (false !== $dotPosition) {
                                     $property->setFloor(intval(mb_substr($item['value'], 0, $dotPosition)));
                                 }
                                 break;
                             case 'balkón':
-                                $property->setBalcony((boolean)$item['value']);
+                                $property->setBalcony((bool) $item['value']);
                                 break;
                             case 'terasa':
-                                $property->setTerrace((boolean)$item['value']);
+                                $property->setTerrace((bool) $item['value']);
                                 break;
                             case 'lodžie':
-                                $property->setLoggia((boolean)$item['value']);
+                                $property->setLoggia((bool) $item['value']);
                                 break;
                             case 'výtah':
-                                $property->setElevator((boolean)$item['value']);
+                                $property->setElevator((bool) $item['value']);
                                 break;
                             case 'parkování':
-                                $property->setParking((boolean)$item['value']);
+                                $property->setParking((bool) $item['value']);
                                 break;
                         }
                     }
@@ -299,7 +266,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $advert->setExternalUrl($this->constructExternalUrl(
                         $ad['hash_id'],
                         'byt',
-                        ($property->getDisposition() !== null) ? $property->getDisposition()->getCode() : $dispositionMap[16],
+                        (null !== $property->getDisposition()) ? $property->getDisposition()->getCode() : PropertyDisposition::DISPOSITION_other,
                         $adDetail['seo']['locality']
                     ));
                     $advert->setProperty($property);
@@ -348,6 +315,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         ];
 
         $url = $this->getSourceUrl().'?'.http_build_query($parameters);
+
         return $url;
     }
 
@@ -361,7 +329,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
     protected function constructExternalUrl(int $id, string $type, string $subtype, string $locality): string
     {
         $urlParts = parse_url($this->getSourceUrl());
-        if ($urlParts === false || !isset($urlParts['scheme']) || !isset($urlParts['host'])) {
+        if (false === $urlParts || !isset($urlParts['scheme']) || !isset($urlParts['host'])) {
             return $this->getSourceUrl();
         }
         $url = vsprintf('%s://%s/detail/prodej/%s/%s/%s/%d', [

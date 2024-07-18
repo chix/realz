@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,27 +15,10 @@ final class PushNotificationsTestCommand extends Command
 {
     protected static $defaultName = 'app:push-notifications:test';
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var HttpClientInterface
-     */
-    private $restClient;
-
-    /**
-     * @var string
-     */
-    protected $expoBackendUrl;
-
-    public function __construct(HttpClientInterface $restClient, LoggerInterface $logger, string $expoBackendUrl)
-    {
-        $this->restClient = $restClient;
-        $this->logger = $logger;
-        $this->expoBackendUrl = $expoBackendUrl;
-
+    public function __construct(
+        private HttpClientInterface $restClient,
+        private string $expoBackendUrl
+    ) {
         parent::__construct();
     }
 
@@ -71,9 +53,9 @@ final class PushNotificationsTestCommand extends Command
         $message->data->type = $type;
         $message->sound = 'default';
         $message->vibrate = true;
-        for ($i = 1; $i <= $count; $i++) {
+        for ($i = 1; $i <= $count; ++$i) {
             $messageTmp = clone $message;
-            $messageTmp->title = 'Notification ' . $i;
+            $messageTmp->title = 'Notification '.$i;
             $data[] = $messageTmp;
         }
 

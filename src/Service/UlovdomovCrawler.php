@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Advert;
 use App\Entity\AdvertType;
+use App\Entity\City;
 use App\Entity\Location;
 use App\Entity\Property;
 use App\Entity\PropertyDisposition;
@@ -15,9 +16,9 @@ use App\Repository\AdvertRepository;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
 use App\Repository\LocationRepository;
-use App\Repository\PropertyRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
+use App\Repository\PropertyRepository;
 use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,47 +27,23 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
 {
-    /** @var HttpClientInterface */
-    protected $restClient;
-
-    /** @var AdvertRepository */
-    protected $advertRepository;
-
-    /** @var AdvertTypeRepository */
-    protected $advertTypeRepository;
-
-    /** @var CityRepository */
-    protected $cityRepository;
-
-    /** @var LocationRepository */
-    protected $locationRepository;
-
-    /** @var PropertyRepository */
-    protected $propertyRepository;
-
-    /** @var PropertyTypeRepository */
-    protected $propertyTypeRepository;
-
-    /** @var SourceRepository */
-    protected $sourceRepository;
-
     /** @var bool */
     protected $fullCrawl = false;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger,
-        AdvertTypeRepository $advertTypeRepository,
-        PropertyConstructionRepository $propertyConstructionRepository,
-        PropertyDispositionRepository $propertyDispositionRepository,
-        string $sourceUrl,
-        HttpClientInterface $restClient,
-        AdvertRepository $advertRepository,
-        CityRepository $cityRepository,
-        LocationRepository $locationRepository,
-        PropertyRepository $propertyRepository,
-        PropertyTypeRepository $propertyTypeRepository,
-        SourceRepository $sourceRepository
+        protected EntityManagerInterface $entityManager,
+        protected LoggerInterface $logger,
+        protected AdvertTypeRepository $advertTypeRepository,
+        protected PropertyConstructionRepository $propertyConstructionRepository,
+        protected PropertyDispositionRepository $propertyDispositionRepository,
+        protected PropertyTypeRepository $propertyTypeRepository,
+        protected string $sourceUrl,
+        private HttpClientInterface $restClient,
+        private AdvertRepository $advertRepository,
+        private CityRepository $cityRepository,
+        private LocationRepository $locationRepository,
+        private PropertyRepository $propertyRepository,
+        private SourceRepository $sourceRepository
     ) {
         $this->restClient = $restClient;
         $this->advertRepository = $advertRepository;
@@ -86,39 +63,34 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
-        if ($advertType !== AdvertType::TYPE_RENT || $propertyType !== PropertyType::TYPE_FLAT) {
+        if (AdvertType::TYPE_RENT !== $advertType || PropertyType::TYPE_FLAT !== $propertyType) {
             return [];
         }
 
         $ulovdomovSource = $this->sourceRepository->findOneByCode(Source::SOURCE_ULOVDOMOV);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
+        /** @var City $brno */
         $brno = $this->cityRepository->findOneByName('Brno');
         $dispositionMap = [
-            1 => PropertyDisposition::DISPOSITION_1,
-            2 => PropertyDisposition::DISPOSITION_1_kk,
-            3 => PropertyDisposition::DISPOSITION_1_1,
-            4 => PropertyDisposition::DISPOSITION_2_kk,
-            5 => PropertyDisposition::DISPOSITION_2_1,
-            6 => PropertyDisposition::DISPOSITION_3_kk,
-            7 => PropertyDisposition::DISPOSITION_3_1,
-            8 => PropertyDisposition::DISPOSITION_4_kk,
-            9 => PropertyDisposition::DISPOSITION_4_1,
-            16 => PropertyDisposition::DISPOSITION_other,
+            1 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1),
+            2 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_kk),
+            3 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_1),
+            4 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_kk),
+            5 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_1),
+            6 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_kk),
+            7 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_1),
+            8 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_kk),
+            9 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_1),
+            16 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_other),
         ];
-        foreach ($dispositionMap as $key => $code) {
-            $dispositionMap[$key] = $this->propertyDispositionRepository->findOneByCode($code);
-        }
 
         $page = 1;
         $limit = 20;
         try {
-            $response = $this->restClient->request('POST', $this->sourceUrl . '/find', [
+            $response = $this->restClient->request('POST', $this->sourceUrl.'/find', [
                 'json' => $this->constructListPayload($page, $limit),
                 'headers' => [
                     'Accept: application/json',
@@ -127,11 +99,11 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
             ]);
             $list = json_decode($response->getContent(true), true);
         } catch (\Exception $e) {
-            $this->logger->debug('Could not load list URL: ' . $this->sourceUrl, $this->constructListPayload($page, $limit));
+            $this->logger->debug('Could not load list URL: '.$this->sourceUrl, $this->constructListPayload($page, $limit));
             exit;
         }
         if ($this->fullCrawl) {
-            $pages = range($page, (int)ceil($list['count'] / $limit));
+            $pages = range($page, (int) ceil($list['count'] / $limit));
         } else {
             $pages = [$page];
         }
@@ -140,7 +112,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
         foreach ($pages as $page) {
             if ($page > 1) {
                 try {
-                    $response = $this->restClient->request('POST', $this->sourceUrl . '/find', [
+                    $response = $this->restClient->request('POST', $this->sourceUrl.'/find', [
                         'json' => $this->constructListPayload($page, $limit),
                         'headers' => [
                             'Accept: application/json',
@@ -149,7 +121,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                     ]);
                     $list = json_decode($response->getContent(true), true);
                 } catch (\Exception $e) {
-                    $this->logger->debug('Could not load list URL: ' . $this->sourceUrl, $this->constructListPayload($page, $limit));
+                    $this->logger->debug('Could not load list URL: '.$this->sourceUrl, $this->constructListPayload($page, $limit));
                     continue;
                 }
             }
@@ -171,7 +143,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                 $property = $existingAdvert
                     ? $existingAdvert->getProperty()
                     : $this->propertyRepository->findProperty();
-                if ($property === null) {
+                if (null === $property) {
                     $property = new Property();
                     $property->setType($propertyTypeMap[$propertyType]);
                 }
@@ -185,7 +157,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                     $longitude = $ad['lng'];
                 }
                 $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                if ($location === null) {
+                if (null === $location) {
                     $location = new Location();
                     $location->setCity($brno);
                     $location->setStreet($street);
@@ -225,7 +197,7 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setExternalUrl($ad['absolute_url']);
                 $advert->setProperty($property);
                 $titleParts = ['Pronájem'];
-                if ($property->getDisposition() !== null) {
+                if (null !== $property->getDisposition()) {
                     $titleParts[] = $property->getDisposition()->getName();
                 }
                 if (!empty($ad['village_part'])) {
@@ -274,14 +246,14 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                 'south_west' => [
                     'lat' => 49.10803981507455,
                     'lng' => 16.191787719726566,
-                ]
+                ],
             ],
         ];
     }
 
     protected function constructDetailUrl(int $id): string
     {
-        $url = $this->getSourceUrl() . '/offer/' . $id;
+        $url = $this->getSourceUrl().'/offer/'.$id;
 
         return $url;
     }

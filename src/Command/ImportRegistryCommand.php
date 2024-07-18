@@ -4,61 +4,36 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\Region;
-use App\Entity\District;
 use App\Entity\City;
 use App\Entity\CityDistrict;
-use App\Repository\CityRepository;
+use App\Entity\District;
+use App\Entity\Region;
 use App\Repository\CityDistrictRepository;
+use App\Repository\CityRepository;
 use App\Repository\DistrictRepository;
 use App\Repository\RegionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\HttpKernel\Config\FileLocator;
-use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\CsvEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 final class ImportRegistryCommand extends Command
 {
     protected static $defaultName = 'app:import:registry';
 
-    /** @var EntityManagerInterface */
-    protected $entityManager;
-
-    /** @var FileLocator */
-    protected $fileLocator;
-
-    /** @var CityRepository */
-    protected $cityRepository;
-
-    /** @var CityDistrictRepository */
-    protected $cityDistrictRepository;
-
-    /** @var DistrictRepository */
-    protected $districtRepository;
-
-    /** @var RegionRepository */
-    protected $regionRepository;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        FileLocator $fileLocator,
-        CityRepository $cityRepository,
-        CityDistrictRepository $cityDistrictRepository,
-        DistrictRepository $districtRepository,
-        RegionRepository $regionRepository
+        private EntityManagerInterface $entityManager,
+        private FileLocator $fileLocator,
+        private CityRepository $cityRepository,
+        private CityDistrictRepository $cityDistrictRepository,
+        private DistrictRepository $districtRepository,
+        private RegionRepository $regionRepository
     ) {
-        $this->entityManager = $entityManager;
-        $this->fileLocator = $fileLocator;
-        $this->cityRepository = $cityRepository;
-        $this->cityDistrictRepository = $cityDistrictRepository;
-        $this->districtRepository = $districtRepository;
-        $this->regionRepository = $regionRepository;
-
         parent::__construct();
     }
 
@@ -75,16 +50,16 @@ final class ImportRegistryCommand extends Command
 
         /** @var string $path */
         $path = $this->fileLocator->locate('../Resources/data/registry.csv', __DIR__);
-        $data = $serializer->decode((string)file_get_contents($path), 'csv');
+        $data = $serializer->decode((string) file_get_contents($path), 'csv');
         /** @var string $pathCityDistricts */
         $pathCityDistricts = $this->fileLocator->locate('../Resources/data/registry_city_districts.csv', __DIR__);
-        $dataCityDistricts = $serializer->decode((string)file_get_contents($pathCityDistricts), 'csv');
+        $dataCityDistricts = $serializer->decode((string) file_get_contents($pathCityDistricts), 'csv');
 
         $max = count($data) + count($dataCityDistricts);
         $batchSize = 25;
         $progressBar = new ProgressBar($output, $max);
         $progressBar->setFormat('Importing registry [%bar% %percent:3s%%] %current%/%max% %remaining:6s%');
-        $progressBar->setRedrawFrequency((int)ceil($max / 100));
+        $progressBar->setRedrawFrequency((int) ceil($max / 100));
         $regionMap = [];
         $districtMap = [];
         foreach ($data as $i => $row) {
@@ -119,8 +94,8 @@ final class ImportRegistryCommand extends Command
                 $city->setName($row['city']);
                 $city->setCode($row['city_code']);
                 $city->setDistrict($districtMap[$row['district_code']]);
-                $city->setLatitude(floatval($row['latitude']));
-                $city->setLongitude(floatval($row['longitude']));
+                $city->setLatitude($row['latitude']);
+                $city->setLongitude($row['longitude']);
                 $this->entityManager->persist($city);
             }
 
@@ -138,11 +113,11 @@ final class ImportRegistryCommand extends Command
             $progressBar->advance();
 
             $city = $this->cityRepository->findOneByCode($row['city_code']);
-            if ($city === null) {
+            if (null === $city) {
                 continue;
             }
             $cityDistrict = $this->cityDistrictRepository->findOneByCode($row['district_code']);
-            if ($cityDistrict === null) {
+            if (null === $cityDistrict) {
                 $cityDistrict = new CityDistrict();
                 $cityDistrict->setName($row['district']);
                 $cityDistrict->setCode($row['district_code']);

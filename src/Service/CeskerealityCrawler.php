@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Advert;
 use App\Entity\AdvertType;
+use App\Entity\City;
 use App\Entity\Location;
 use App\Entity\Property;
 use App\Entity\PropertyConstruction;
@@ -15,9 +16,9 @@ use App\Repository\AdvertRepository;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
 use App\Repository\LocationRepository;
-use App\Repository\PropertyRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
+use App\Repository\PropertyRepository;
 use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,50 +29,23 @@ use simplehtmldom\HtmlWeb;
 
 final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
 {
-    /** @var AdvertRepository */
-    protected $advertRepository;
-
-    /** @var AdvertTypeRepository */
-    protected $advertTypeRepository;
-
-    /** @var CityRepository */
-    protected $cityRepository;
-
-    /** @var LocationRepository */
-    protected $locationRepository;
-
-    /** @var PropertyRepository */
-    protected $propertyRepository;
-
-    /** @var PropertyTypeRepository */
-    protected $propertyTypeRepository;
-
-    /** @var SourceRepository */
-    protected $sourceRepository;
-
     /** @var bool */
     protected $fullCrawl = false;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
-        LoggerInterface $logger,
-        AdvertTypeRepository $advertTypeRepository,
-        PropertyConstructionRepository $propertyConstructionRepository,
-        PropertyDispositionRepository $propertyDispositionRepository,
-        PropertyTypeRepository $propertyTypeRepository,
-        string $sourceUrl,
-        AdvertRepository $advertRepository,
-        CityRepository $cityRepository,
-        LocationRepository $locationRepository,
-        PropertyRepository $propertyRepository,
-        SourceRepository $sourceRepository
+        protected EntityManagerInterface $entityManager,
+        protected LoggerInterface $logger,
+        protected AdvertTypeRepository $advertTypeRepository,
+        protected PropertyConstructionRepository $propertyConstructionRepository,
+        protected PropertyDispositionRepository $propertyDispositionRepository,
+        protected PropertyTypeRepository $propertyTypeRepository,
+        protected string $sourceUrl,
+        private AdvertRepository $advertRepository,
+        private CityRepository $cityRepository,
+        private LocationRepository $locationRepository,
+        private PropertyRepository $propertyRepository,
+        private SourceRepository $sourceRepository
     ) {
-        $this->advertRepository = $advertRepository;
-        $this->cityRepository = $cityRepository;
-        $this->locationRepository = $locationRepository;
-        $this->propertyRepository = $propertyRepository;
-        $this->sourceRepository = $sourceRepository;
-
         parent::__construct(
             $entityManager,
             $logger,
@@ -83,14 +57,12 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
     {
         $ceskerealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_CESKEREALITY);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
+        /** @var City $brno */
         $brno = $this->cityRepository->findOneByName('Brno');
         $constructionBrick = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_BRICK);
         $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
@@ -104,32 +76,33 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
 
         $adverts = [];
         foreach ($pages as $page) {
-            $listUrl = $this->constructListUrl($page, $advertType, $propertyType);
+            $listUrl = $this->constructListUrl($advertType, $propertyType, $page);
             try {
                 $document = new HtmlWeb();
+                /** @var HtmlDocument|null $listDom */
                 $listDom = $document->load($listUrl);
             } catch (\Exception $e) {
-                $this->logger->debug('Could not load list URL: ' . $listUrl . ' ' .$e->getMessage());
+                $this->logger->debug('Could not load list URL: '.$listUrl.' '.$e->getMessage());
                 continue;
             }
-            if (empty($listDom)) {
-                $this->logger->debug('Could not load list URL: ' . $listUrl);
+            if (null === $listDom) {
+                $this->logger->debug('Could not load list URL: '.$listUrl);
                 continue;
             }
-            $listDomNodes = (array)$listDom->find('#div_nemovitost_obal .div_nemovitost');
+            $listDomNodes = (array) $listDom->find('#div_nemovitost_obal .div_nemovitost');
             if (empty($listDomNodes)) {
-                $this->logger->debug('Empty nodes on URL: ' . $listUrl);
+                $this->logger->debug('Empty nodes on URL: '.$listUrl);
                 continue;
             }
 
             foreach ($listDomNodes as $node) { /** @var HtmlNode $node */
                 $detailUrlNode = $node->find('h2 a', 0);
-                if ($detailUrlNode === false) {
+                if (false === $detailUrlNode) {
                     continue;
                 }
                 $detailUrl = trim($detailUrlNode->getAttribute('href'));
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
-                if ($existingAdvert !== null) {
+                if (null !== $existingAdvert) {
                     $currentPrice = null;
 
                     $priceNode = $node->find('.nemovitost_info .cena', 0);
@@ -139,32 +112,32 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     }
 
                     $existingPrice = $existingAdvert->getPrice();
-                    if ((int)$currentPrice === (int)$existingPrice) {
+                    if ((int) $currentPrice === (int) $existingPrice) {
                         continue;
                     }
                 }
 
                 try {
                     $document = new HtmlDocument();
-                    $detailDom = $document->load(iconv('windows-1250', 'utf-8', (string)$this->curlGetContent($detailUrl)));
+                    $detailDom = $document->load(iconv('windows-1250', 'utf-8', (string) $this->curlGetContent($detailUrl)));
                 } catch (\Exception $e) {
-                    $this->logger->debug('Could not load detail URL: ' . $detailUrl . ' ' . $e->getMessage());
+                    $this->logger->debug('Could not load detail URL: '.$detailUrl.' '.$e->getMessage());
                     continue;
                 }
                 if (empty($detailDom)) {
-                    $this->logger->debug('Could not load detail URL: ' . $detailUrl);
+                    $this->logger->debug('Could not load detail URL: '.$detailUrl);
                     continue;
                 }
                 $mainNode = $detailDom->find('#hlavni_obsah_nemovitost', 0);
-                if ($mainNode === null) {
-                    $this->logger->debug('No main node on URL: ' . $detailUrl);
+                if (null === $mainNode) {
+                    $this->logger->debug('No main node on URL: '.$detailUrl);
                     continue;
                 }
 
                 $property = $existingAdvert
                     ? $existingAdvert->getProperty()
                     : $this->propertyRepository->findProperty();
-                if ($property === null) {
+                if (null === $property) {
                     $property = new Property();
                     $property->setType($propertyTypeMap[$propertyType]);
                 }
@@ -179,17 +152,17 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     $iframeUrlQuery = [];
                     $iframeSrc = $mapIframeNode->src;
                     $iframeUrlParts = parse_url($iframeSrc);
-                    if ($iframeUrlParts !== false && isset($iframeUrlParts['query'])) {
+                    if (false !== $iframeUrlParts && isset($iframeUrlParts['query'])) {
                         parse_str($iframeUrlParts['query'], $iframeUrlQuery);
                     }
-                    if (isset($iframeUrlQuery['q'])) {
+                    if (isset($iframeUrlQuery['q']) && is_string($iframeUrlQuery['q'])) {
                         $gps = explode(',', $iframeUrlQuery['q']);
-                        $latitude = floatval($gps[0]);
-                        $longitude = floatval($gps[1]);
+                        $latitude = $gps[0];
+                        $longitude = $gps[1];
                     }
                 }
                 $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
-                if ($location === null) {
+                if (null === $location) {
                     $location = new Location();
                     $location->setCity($brno);
                     $location->setStreet($street);
@@ -198,18 +171,18 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 $property->setLocation($location);
 
-                $title = trim(strip_tags((string)$mainNode->find('div.title h1', 0)->innertext));
+                $title = trim(strip_tags((string) $mainNode->find('div.title h1', 0)->innertext));
                 $description = null;
                 $possibleDescriptionNodes = $mainNode->find('div.row h3');
                 foreach ($possibleDescriptionNodes as $descriptionNode) {
-                    if (trim($descriptionNode->innertext) !== 'Popis nemovitosti') {
+                    if ('Popis nemovitosti' !== trim($descriptionNode->innertext)) {
                         continue;
                     }
                     $description = $this->normalizeHtmlString($descriptionNode->parent->innertext);
                 }
-                $this->loadPropertyFromFulltext($property, $title . ' ' . $description);
+                $this->loadPropertyFromFulltext($property, $title.' '.$description);
 
-                $itemNodes = (array)$mainNode->find('div.row div.info-table div.item');
+                $itemNodes = (array) $mainNode->find('div.row div.info-table div.item');
                 foreach ($itemNodes as $itemNode) {
                     $itemHeading = '';
                     $itemValue = '';
@@ -247,7 +220,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $images = [];
-                $imageHrefNodes = (array)$mainNode->find('div#media-window div.media-slide a.cbox');
+                $imageHrefNodes = (array) $mainNode->find('div#media-window div.media-slide a.cbox');
                 foreach ($imageHrefNodes as $imageHrefNode) {
                     $imageSrc = $imageHrefNode->getAttribute('href');
                     $tmp = new \stdClass();
@@ -284,7 +257,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page = 1, string $advertType, string $propertyType): string
+    protected function constructListUrl(string $advertType, string $propertyType, int $page = 1): string
     {
         $advertTypeParamMap = [
             AdvertType::TYPE_SALE => 'prodej',
@@ -305,6 +278,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
         if ($page > 1) {
             $url .= '?strana='.$page;
         }
+
         return $url;
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,27 +14,10 @@ final class PushNotificationsReceiptsCommand extends Command
 {
     protected static $defaultName = 'app:push-notifications:get-receipt';
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * @var HttpClientInterface
-     */
-    protected $restClient;
-
-    /**
-     * @var string
-     */
-    protected $expoBackendUrl;
-
-    public function __construct(HttpClientInterface $restClient, LoggerInterface $logger, string $expoBackendUrl)
-    {
-        $this->restClient = $restClient;
-        $this->logger = $logger;
-        $this->expoBackendUrl = $expoBackendUrl;
-
+    public function __construct(
+        private HttpClientInterface $restClient,
+        private string $expoBackendUrl
+    ) {
         parent::__construct();
     }
 
@@ -60,7 +42,6 @@ final class PushNotificationsReceiptsCommand extends Command
                 'headers' => [
                     'Accept: application/json',
                 ],
-
             ]);
             $response->getContent();
             if ($response->getStatusCode() >= 400) {

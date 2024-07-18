@@ -4,66 +4,52 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PropertyConstructionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="property_construction")
- * @ORM\Entity(repositoryClass="App\Repository\PropertyConstructionRepository")
- *
- * @UniqueEntity({"code"})
- *
- * @ApiResource(
- *     collectionOperations={"get"},
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- *     attributes={"pagination_enabled"=false},
- * )
- */
+#[ORM\Table(name: 'property_construction')]
+#[ORM\Entity(repositoryClass: PropertyConstructionRepository::class)]
+#[UniqueEntity('code')]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    paginationEnabled: false,
+)]
 class PropertyConstruction extends BaseEntity
 {
-    const CONSTRUCTION_PANEL = 'panel';
-    const CONSTRUCTION_BRICK = 'brick';
+    public const CONSTRUCTION_PANEL = 'panel';
+    public const CONSTRUCTION_BRICK = 'brick';
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $name;
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $name;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=255, unique=true)
-     *
-     * @Groups({"read"})
-     */
-    private $code;
+    #[ORM\Column(name: 'code', type: Types::STRING, length: 255, unique: true)]
+    #[Groups(['read'])]
+    private string $code;
 
     /**
      * @var ArrayCollection<int, Property>
-     *
-     * @ORM\OneToMany(targetEntity="Property", mappedBy="construction")
      */
-    private $properties;
+    #[ORM\OneToMany(targetEntity: Property::class, mappedBy: 'construction')]
+    private Collection $properties;
 
     public function __construct()
     {

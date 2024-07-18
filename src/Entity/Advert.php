@@ -4,130 +4,79 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiFilter;
-use ApiPlatform\Core\Annotation\ApiResource;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\ExistsFilter;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\OrderFilter;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\AdvertRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="advert", indexes={@ORM\Index(name="updated_at_idx", columns={"updated_at"})})
- * @ORM\Entity(repositoryClass="App\Repository\AdvertRepository")
- *
- * @ApiResource(
- *     collectionOperations={"get"},
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- *     attributes={"pagination_items_per_page"=20},
- * )
- * @ApiFilter(SearchFilter::class, properties={"type.code": "exact", "property.location.city.code": "exact"})
- * @ApiFilter(ExistsFilter::class, properties={"deletedAt"})
- * @ApiFilter(OrderFilter::class, properties={"id": "DESC"})
- */
+#[ORM\Table(name: 'advert')]
+#[ORM\Index(name: 'updated_at_idx', columns: ['updated_at'])]
+#[ORM\Entity(repositoryClass: AdvertRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    paginationItemsPerPage: 20,
+)]
+#[ApiFilter(SearchFilter::class, properties: ['type.code' => 'exact', 'property.location.city.code' => 'exact'])]
+#[ApiFilter(ExistsFilter::class, properties: ['deletedAt'])]
+#[ApiFilter(OrderFilter::class, properties: ['id' => 'DESC'])]
 class Advert extends BaseEntity
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var AdvertType
-     *
-     * @ORM\ManyToOne(targetEntity="AdvertType", inversedBy="adverts")
-     *
-     * @Groups({"read"})
-     */
-    private $type;
+    #[ORM\ManyToOne(targetEntity: AdvertType::class, inversedBy: 'adverts')]
+    #[Groups(['read'])]
+    private AdvertType $type;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="title", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $title;
+    #[ORM\Column(name: 'title', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $title;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $description;
+    #[ORM\Column(name: 'description', type: Types::TEXT, nullable: true)]
+    #[Groups(['read'])]
+    private ?string $description;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="price", type="integer", nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $price;
+    #[ORM\Column(name: 'price', type: Types::INTEGER, nullable: true)]
+    #[Groups(['read'])]
+    private ?int $price;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="previous_price", type="integer", nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $previousPrice;
+    #[ORM\Column(name: 'previous_price', type: Types::INTEGER, nullable: true)]
+    #[Groups(['read'])]
+    private ?int $previousPrice;
 
-    /**
-     * @var string|null $currency
-     *
-     * @ORM\Column(name="currency", type="string", length=8, nullable=true)
-     *
-     * @Groups({"read"})
-     */
-    private $currency;
+    #[ORM\Column(name: 'currency', type: Types::STRING, length: 8, nullable: true)]
+    #[Groups(['read'])]
+    private ?string $currency;
 
-    /**
-     * @var Source|null
-     *
-     * @ORM\ManyToOne(targetEntity="Source", inversedBy="adverts")
-     *
-     * @Groups({"read"})
-     */
-    private $source;
+    #[ORM\ManyToOne(targetEntity: Source::class, inversedBy: 'adverts')]
+    #[Groups(['read'])]
+    private ?Source $source;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="sourceUrl", type="string", length=1024)
-     *
-     * @Groups({"read"})
-     */
-    private $sourceUrl;
+    #[ORM\Column(name: 'sourceUrl', type: Types::STRING, length: 1024)]
+    #[Groups(['read'])]
+    private string $sourceUrl;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="externalUrl", type="string", length=1024)
-     *
-     * @Groups({"read"})
-     */
-    private $externalUrl;
+    #[ORM\Column(name: 'externalUrl', type: Types::STRING, length: 1024)]
+    #[Groups(['read'])]
+    private string $externalUrl;
 
-    /**
-     * @var Property|null
-     *
-     * @ORM\ManyToOne(targetEntity="Property", inversedBy="adverts")
-     *
-     * @Groups({"read"})
-     */
-    private $property;
+    #[ORM\ManyToOne(targetEntity: Property::class, inversedBy: 'adverts')]
+    #[Groups(['read'])]
+    private ?Property $property;
 
     public function getId(): int
     {

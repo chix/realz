@@ -4,67 +4,53 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use App\Repository\PropertyTypeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="property_type")
- * @ORM\Entity(repositoryClass="App\Repository\PropertyTypeRepository")
- *
- * @UniqueEntity({"code"})
- *
- * @ApiResource(
- *     collectionOperations={"get"},
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- *     attributes={"pagination_enabled"=false},
- * )
- */
+#[ORM\Table(name: 'property_type')]
+#[ORM\Entity(repositoryClass: PropertyTypeRepository::class)]
+#[UniqueEntity('code')]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    paginationEnabled: false,
+)]
 class PropertyType extends BaseEntity
 {
-    const TYPE_FLAT = 'flat';
-    const TYPE_HOUSE = 'house';
-    const TYPE_LAND = 'land';
+    public const TYPE_FLAT = 'flat';
+    public const TYPE_HOUSE = 'house';
+    public const TYPE_LAND = 'land';
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255)
-     *
-     * @Groups({"read"})
-     */
-    private $name;
+    #[ORM\Column(name: 'name', type: Types::STRING, length: 255)]
+    #[Groups(['read'])]
+    private string $name;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="code", type="string", length=255, unique=true)
-     *
-     * @Groups({"read"})
-     */
-    private $code;
+    #[ORM\Column(name: 'code', type: Types::STRING, length: 255, unique: true)]
+    #[Groups(['read'])]
+    private string $code;
 
     /**
      * @var ArrayCollection<int, Property>
-     *
-     * @ORM\OneToMany(targetEntity="Property", mappedBy="type")
      */
-    private $properties;
+    #[ORM\OneToMany(targetEntity: Property::class, mappedBy: 'type')]
+    private Collection $properties;
 
     public function __construct()
     {

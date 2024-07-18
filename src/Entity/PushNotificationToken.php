@@ -4,98 +4,79 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Dto\PushNotificationTokenInput;
+use App\Repository\PushNotificationTokenRepository;
+use App\State\PushNotificationTokenProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Table(name="push_notification_token", indexes={@ORM\Index(name="token_idx", columns={"token"})})
- * @ORM\Entity(repositoryClass="App\Repository\PushNotificationTokenRepository")
- *
- * @ApiResource(
- *     collectionOperations={
- *         "create_or_update"={
- *             "method"="POST",
- *             "input"=PushNotificationTokenInput::class,
- *             "read"=false,
- *         }
- *     },
- *     itemOperations={"get"},
- *     normalizationContext={"groups"={"read"}},
- *     denormalizationContext={"groups"={"write"}},
- * )
- */
+#[ORM\Table(name: 'push_notification_token')]
+#[ORM\Index(name: 'token_idx', columns: ['token'])]
+#[ORM\Entity(repositoryClass: PushNotificationTokenRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new Post(
+            input: PushNotificationTokenInput::class,
+            processor: PushNotificationTokenProcessor::class,
+            read: false,
+        ),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    denormalizationContext: ['groups' => ['write']],
+)]
 class PushNotificationToken extends BaseEntity
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     *
-     * @Groups({"read", "write"})
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\GeneratedValue]
+    #[Groups(['read'])]
+    private int $id;
+
+    #[ORM\Column(name: 'token', type: Types::STRING, length: 255)]
+    private string $token;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="token", type="string", length=255)
+     * For system activation/deactivation.
      */
-    private $token;
+    #[ORM\Column(name: 'active', type: Types::BOOLEAN, options: ['deafult' => true])]
+    private bool $active;
+
+    #[ORM\Column(name: 'error_count', type: Types::INTEGER, options: ['deafult' => 0])]
+    private int $errorCount;
 
     /**
-     * For system activation/deactivation
-     *
-     * @var bool
-     *
-     * @ORM\Column(name="active", type="boolean", options={"default" : 1})
+     * @var array<mixed>|null
      */
-    private $active;
+    #[ORM\Column(name: 'last_response', type: Types::JSON, nullable: true)]
+    private ?array $lastResponse;
 
     /**
-     * @var int
-     *
-     * @ORM\Column(name="error_count", type="integer", options={"default" : 0})
+     * For user activation/deactivation.
      */
-    private $errorCount;
+    #[ORM\Column(name: 'enabled', type: Types::BOOLEAN, options: ['deafult' => true])]
+    private bool $enabled;
 
     /**
-     * @var array<mixed>|null $lastResponse
-     *
-     * @ORM\Column(name="last_response", type="json_array", nullable=true)
+     * @var array<mixed>|null
      */
-    private $lastResponse;
-
-    /**
-     * For user activation/deactivation
-     *
-     * @var bool
-     *
-     * @ORM\Column(name="enabled", type="boolean", options={"default" : 1})
-     */
-    private $enabled;
-
-    /**
-     * @var array<mixed>|null $filters
-     *
-     * @ORM\Column(name="filters", type="json_array", nullable=true)
-     */
-    private $filters;
+    #[ORM\Column(name: 'filters', type: Types::JSON, nullable: true)]
+    private ?array $filters;
 
     /**
      * @var ArrayCollection<int, Advert>
-     * @ORM\ManyToMany(targetEntity="Advert")
-     * @ORM\JoinTable(name="push_notification_tokens_adverts",
-     *      joinColumns={@ORM\JoinColumn(name="push_notification_token_id", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="advert_id", referencedColumnName="id")}
-     *  )
      */
-    private $adverts;
+    #[ORM\ManyToMany(targetEntity: Advert::class)]
+    #[ORM\JoinTable(name: 'push_notification_tokens_adverts', joinColumns: [])]
+    #[ORM\JoinColumn(name: 'push_notification_token_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'advert_id', referencedColumnName: 'id')]
+    private Collection $adverts;
 
     public function __construct()
     {
@@ -203,7 +184,7 @@ class PushNotificationToken extends BaseEntity
         return $this->filters;
     }
 
-    public function setEnabled(bool $enabled):  self
+    public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
 

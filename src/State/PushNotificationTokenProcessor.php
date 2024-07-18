@@ -1,69 +1,49 @@
 <?php
 
-namespace App\Entity\Dto;
+namespace App\State;
 
-use ApiPlatform\Core\Bridge\Symfony\Validator\Exception\ValidationException as ApiPlatformValidationException;
-use ApiPlatform\Core\DataTransformer\DataTransformerInterface;
-use ApiPlatform\Core\Validator\ValidatorInterface;
+use ApiPlatform\Metadata\Operation;
+use ApiPlatform\State\ProcessorInterface;
+use ApiPlatform\Validator\Exception\ValidationException as ApiPlatformValidationException;
+use ApiPlatform\Validator\ValidatorInterface;
 use App\Entity\City;
 use App\Entity\CityDistrict;
+use App\Entity\Dto\PushNotificationTokenInput;
 use App\Entity\PropertyDisposition;
 use App\Entity\PushNotificationToken;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
 use App\Repository\PushNotificationTokenRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 
-final class PushNotificationTokenInputTransformer implements DataTransformerInterface
+/**
+ * @implements ProcessorInterface<PushNotificationTokenInput, PushNotificationToken>
+ */
+final class PushNotificationTokenProcessor implements ProcessorInterface
 {
-    /**
-     * @var ValidatorInterface
-     */
-    private $validator;
-
-    /**
-     * @var CityRepository
-     */
-    private $cityRepository;
-
-    /**
-     * @var PushNotificationTokenRepository
-     */
-    private $tokenRepository;
-
-    /**
-     * @var AdvertTypeRepository
-     */
-    protected $advertTypeRepository;
-
     public function __construct(
-        CityRepository $cityRepository,
-        PushNotificationTokenRepository $tokenRepository,
-        AdvertTypeRepository $advertTypeRepository,
-        ValidatorInterface $validator
+        private EntityManagerInterface $entityManager,
+        private CityRepository $cityRepository,
+        private PushNotificationTokenRepository $tokenRepository,
+        private AdvertTypeRepository $advertTypeRepository,
+        private ValidatorInterface $validator
     ) {
-        $this->cityRepository = $cityRepository;
-        $this->tokenRepository = $tokenRepository;
-        $this->advertTypeRepository = $advertTypeRepository;
-        $this->validator = $validator;
     }
 
     /**
-     * {@inheritdoc}
-     *
      * @param PushNotificationTokenInput $data
-     * @param array<mixed> $context
      *
      * @throws ApiPlatformValidationException
      */
-    public function transform($data, string $to, array $context = []): PushNotificationToken
+    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): PushNotificationToken
     {
         // basic dto annotation validation
         $this->validator->validate($data);
 
         $token = $this->createOrUpdateEntity($data);
-        
+
         return $token;
     }
 
@@ -81,6 +61,9 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
         $entity->setEnabled($data->getEnabled());
         $entity->setFilters($this->sanitizeFilters($data->getFilters()));
 
+        $this->entityManager->persist($entity);
+        $this->entityManager->flush();
+
         return $entity;
     }
 
@@ -94,7 +77,7 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
     private function sanitizeFilters(?array $rawFilters): array
     {
         $filters = [];
-        if ($rawFilters === null) {
+        if (null === $rawFilters) {
             return $filters;
         }
 
@@ -102,31 +85,26 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
             /** @var City|null $city */
             $city = null;
             ksort($rawCityFilters);
+            /** @var array<string,mixed> $cityFilters */
             $cityFilters = [];
             foreach ($rawCityFilters as $type => $filter) {
                 switch ($type) {
                     case 'advertType':
                         $advertType = $this->advertTypeRepository->findOneByCode($filter);
-                        if ($advertType === null) {
-                            throw $this->createValidationException(
-                                'filters',
-                                "Advert type {$filter} not found."
-                            );
+                        if (null === $advertType) {
+                            throw $this->createValidationException('filters', "Advert type {$filter} not found.");
                         }
                         $cityFilters[$type] = $advertType->getCode();
                         break;
                     case 'cityCode':
                         $city = $this->cityRepository->findOneByCode($filter);
-                        if ($city === null) {
-                            throw $this->createValidationException(
-                                'filters',
-                                "City with code {$filter} not found."
-                            );
+                        if (null === $city) {
+                            throw $this->createValidationException('filters', "City with code {$filter} not found.");
                         }
                         $cityFilters[$type] = $city->getCode();
                         break;
                     case 'cityDistrict':
-                        if (empty($filter) || $city === null) {
+                        if (empty($filter) || null === $city) {
                             continue 2;
                         }
                         $cityDistrictCodes = $city->getCityDistrictCodes();
@@ -134,10 +112,7 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                         $cityFilters[$type] = [];
                         foreach ($filter as $disctrictCode) {
                             if (!in_array($disctrictCode, $cityDistrictCodes)) {
-                                throw $this->createValidationException(
-                                    'filters',
-                                    "City district {$disctrictCode} not found."
-                                );
+                                throw $this->createValidationException('filters', "City district {$disctrictCode} not found.");
                             }
                             $cityFilters[$type][] = $disctrictCode;
                         }
@@ -147,10 +122,7 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                             $cityFilters[$type] = [];
                             foreach ($filter as $dispositionCode) {
                                 if (!in_array($dispositionCode, PropertyDisposition::getCodes())) {
-                                    throw $this->createValidationException(
-                                        'filters',
-                                        "Disposition {$dispositionCode} not found."
-                                    );
+                                    throw $this->createValidationException('filters', "Disposition {$dispositionCode} not found.");
                                 }
                                 $cityFilters[$type][] = $dispositionCode;
                             }
@@ -158,10 +130,7 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                         break;
                     case 'price':
                         if (!isset($filter['gte']) && !isset($filter['lte'])) {
-                            throw $this->createValidationException(
-                                'filters',
-                                "Either gte or lte have to be set on the price filter."
-                            );
+                            throw $this->createValidationException('filters', 'Either gte or lte have to be set on the price filter.');
                         }
                         $cityFilters[$type] = [];
                         if (isset($filter['gte'])) {
@@ -172,17 +141,14 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
                         }
                         break;
                     default:
-                        throw $this->createValidationException(
-                            'filters',
-                            "Unsupported filter type {$type}."
-                        );
+                        throw $this->createValidationException('filters', "Unsupported filter type {$type}.");
                 }
             }
             if (!empty($cityFilters)) {
                 $filters[] = $cityFilters;
             }
         }
-        
+
         return $filters;
     }
 
@@ -196,17 +162,7 @@ final class PushNotificationTokenInputTransformer implements DataTransformerInte
             $property,
             null
         )]);
-        return new ApiPlatformValidationException($violationList);
-    }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @param mixed $data
-     * @param array<mixed> $context
-     */
-    public function supportsTransformation($data, string $to, array $context = []): bool
-    {
-        return $to === PushNotificationToken::class;
+        return new ApiPlatformValidationException($violationList);
     }
 }
