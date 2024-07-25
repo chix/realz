@@ -47,7 +47,7 @@ class CityDistrict extends BaseEntity
     private string $code;
 
     #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'cityDistricts')]
-    private ?City $city;
+    private ?City $city = null;
 
     /**
      * @var ArrayCollection<int, Location>
@@ -59,7 +59,7 @@ class CityDistrict extends BaseEntity
      * @var array<mixed>|null
      */
     #[ORM\Column(name: 'queries', type: Types::JSON, nullable: true)]
-    private ?array $queries;
+    private ?array $queries = null;
 
     public function __construct()
     {

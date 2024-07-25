@@ -25,15 +25,15 @@ class Location extends BaseEntity
 
     #[ORM\Column(name: 'street', type: Types::STRING, length: 255, nullable: true)]
     #[Groups(['read'])]
-    private ?string $street;
+    private ?string $street = null;
 
     #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'locations')]
     #[Groups(['read'])]
-    private ?City $city;
+    private ?City $city = null;
 
     #[ORM\ManyToOne(targetEntity: CityDistrict::class, inversedBy: 'locations')]
     #[Groups(['read'])]
-    private ?CityDistrict $cityDistrict;
+    private ?CityDistrict $cityDistrict = null;
 
     /**
      * @var ArrayCollection<int, Property>

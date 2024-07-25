@@ -89,7 +89,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 $this->logger->debug('Could not load list URL: '.$listUrl);
                 continue;
             }
-            $listDomNodes = (array) $listDom->find('#div_nemovitost_obal .div_nemovitost');
+            $listDomNodes = (array) $listDom->find('article.i-estate');
             if (empty($listDomNodes)) {
                 $this->logger->debug('Empty nodes on URL: '.$listUrl);
                 continue;
@@ -100,12 +100,12 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 if (false === $detailUrlNode) {
                     continue;
                 }
-                $detailUrl = trim($detailUrlNode->getAttribute('href'));
+                $detailUrl = $this->constructDetailUrl(trim((string) $detailUrlNode->getAttribute('href')));
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if (null !== $existingAdvert) {
                     $currentPrice = null;
 
-                    $priceNode = $node->find('.nemovitost_info .cena', 0);
+                    $priceNode = $node->find('.i-estate__footer-price-value', 0);
                     if ($priceNode) {
                         $priceRaw = trim(strip_tags($priceNode->innertext));
                         $currentPrice = intval(preg_replace('/\D/', '', $priceRaw));
@@ -119,7 +119,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
 
                 try {
                     $document = new HtmlDocument();
-                    $detailDom = $document->load(iconv('windows-1250', 'utf-8', (string) $this->curlGetContent($detailUrl)));
+                    $detailDom = $document->load((string) $this->curlGetContent($detailUrl));
                 } catch (\Exception $e) {
                     $this->logger->debug('Could not load detail URL: '.$detailUrl.' '.$e->getMessage());
                     continue;
@@ -128,7 +128,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: '.$detailUrl);
                     continue;
                 }
-                $mainNode = $detailDom->find('#hlavni_obsah_nemovitost', 0);
+                $mainNode = $detailDom->find('main', 0);
                 if (null === $mainNode) {
                     $this->logger->debug('No main node on URL: '.$detailUrl);
                     continue;
@@ -143,23 +143,14 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $street = $latitude = $longitude = null;
-                $streetNode = $mainNode->find('div.title h2', 0);
+                $streetNode = $mainNode->find('h1 span', 0);
                 if ($streetNode) {
                     $street = trim($streetNode->innertext);
                 }
-                $mapIframeNode = $mainNode->find('iframe[data-block-name=map-canvas]', 0);
-                if ($mapIframeNode) {
-                    $iframeUrlQuery = [];
-                    $iframeSrc = $mapIframeNode->src;
-                    $iframeUrlParts = parse_url($iframeSrc);
-                    if (false !== $iframeUrlParts && isset($iframeUrlParts['query'])) {
-                        parse_str($iframeUrlParts['query'], $iframeUrlQuery);
-                    }
-                    if (isset($iframeUrlQuery['q']) && is_string($iframeUrlQuery['q'])) {
-                        $gps = explode(',', $iframeUrlQuery['q']);
-                        $latitude = $gps[0];
-                        $longitude = $gps[1];
-                    }
+                $distanceInputNode = $mainNode->find('input#driving_calculator_from', 0);
+                if ($distanceInputNode) {
+                    $latitude = $distanceInputNode->getAttribute('data-coord-lat') ? $distanceInputNode->getAttribute('data-coord-lat') : null;
+                    $longitude = $distanceInputNode->getAttribute('data-coord-lat') ? $distanceInputNode->getAttribute('data-coord-lat') : null;
                 }
                 $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
                 if (null === $location) {
@@ -171,23 +162,20 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
                 $property->setLocation($location);
 
-                $title = trim(strip_tags((string) $mainNode->find('div.title h1', 0)->innertext));
+                $title = trim(strip_tags((string) $mainNode->find('h1', 0)->innertext));
                 $description = null;
-                $possibleDescriptionNodes = $mainNode->find('div.row h3');
-                foreach ($possibleDescriptionNodes as $descriptionNode) {
-                    if ('Popis nemovitosti' !== trim($descriptionNode->innertext)) {
-                        continue;
-                    }
-                    $description = $this->normalizeHtmlString($descriptionNode->parent->innertext);
+                $descriptionNode = $mainNode->find('section.s-estate-content div.entry-content', 0);
+                if ($descriptionNode) {
+                    $description = $this->normalizeHtmlString($descriptionNode->innertext);
                 }
-                $this->loadPropertyFromFulltext($property, $title.' '.$description);
+                $this->loadPropertyFromFulltext($property, $title.' '.(string) $description);
 
-                $itemNodes = (array) $mainNode->find('div.row div.info-table div.item');
+                $itemNodes = (array) $mainNode->find('section.s-estate-info dl.g-info div.i-info');
                 foreach ($itemNodes as $itemNode) {
                     $itemHeading = '';
                     $itemValue = '';
-                    $itemHeadingNode = $itemNode->find('div.name', 0);
-                    $itemValueNode = $itemNode->find('div.value', 0);
+                    $itemHeadingNode = $itemNode->find('span.-info__title', 0);
+                    $itemValueNode = $itemNode->find('span.i-info__value', 0);
                     if ($itemHeadingNode) {
                         $itemHeading = str_replace(':', '', trim(strip_tags($itemHeadingNode->innertext)));
                     }
@@ -220,7 +208,7 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 }
 
                 $images = [];
-                $imageHrefNodes = (array) $mainNode->find('div#media-window div.media-slide a.cbox');
+                $imageHrefNodes = (array) $mainNode->find('section.s-estate-detail-intro div.gallery div.swiper-wrapper a');
                 foreach ($imageHrefNodes as $imageHrefNode) {
                     $imageSrc = $imageHrefNode->getAttribute('href');
                     $tmp = new \stdClass();
@@ -238,9 +226,10 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setProperty($property);
                 $advert->setTitle($title);
                 $advert->setDescription($description);
-                $priceNode = $mainNode->find('span[itemprop=price]', 0);
+                $priceNode = $mainNode->find('h2.s-estate-detail-intro__price', 0);
                 if ($priceNode) {
-                    $price = intval(trim($priceNode->content));
+                    $priceRaw = trim(strip_tags($priceNode->innertext));
+                    $price = intval(preg_replace('/\D/', '', $priceRaw));
                     $advert->setPrice($price);
                     $advert->setCurrency('CZK');
                 }
@@ -274,10 +263,17 @@ final class CeskerealityCrawler extends CrawlerBase implements CrawlerInterface
             'city' => 'obec-brno',
             'order' => 'nejnovejsi',
         ];
-        $url = $this->getSourceUrl().vsprintf('/%s/%s/%s/%s', array_values($parameters));
+        $url = $this->getSourceUrl().vsprintf('/%s/%s/%s/%s/', array_values($parameters));
         if ($page > 1) {
             $url .= '?strana='.$page;
         }
+
+        return $url;
+    }
+
+    protected function constructDetailUrl(string $path): string
+    {
+        $url = $this->getSourceUrl().$path;
 
         return $url;
     }

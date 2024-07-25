@@ -23,31 +23,31 @@ class Property extends BaseEntity
 
     #[ORM\ManyToOne(targetEntity: PropertyType::class, inversedBy: 'properties')]
     #[Groups(['read'])]
-    private ?PropertyType $type;
+    private ?PropertyType $type = null;
 
     #[ORM\ManyToOne(targetEntity: PropertyDisposition::class, inversedBy: 'properties')]
     #[Groups(['read'])]
-    private ?PropertyDisposition $disposition;
+    private ?PropertyDisposition $disposition = null;
 
     #[ORM\ManyToOne(targetEntity: PropertyConstruction::class, inversedBy: 'properties')]
     #[Groups(['read'])]
-    private ?PropertyConstruction $construction;
+    private ?PropertyConstruction $construction = null;
 
     #[ORM\ManyToOne(targetEntity: PropertyCondition::class, inversedBy: 'properties')]
     #[Groups(['read'])]
-    private ?PropertyCondition $condition;
+    private ?PropertyCondition $condition = null;
 
     #[ORM\Column(name: 'ownership', type: Types::STRING, length: 255, nullable: true)]
     #[Groups(['read'])]
-    private ?string $ownership;
+    private ?string $ownership = null;
 
     #[ORM\Column(name: 'floor', type: Types::INTEGER, nullable: true)]
     #[Groups(['read'])]
-    private ?int $floor;
+    private ?int $floor = null;
 
     #[ORM\Column(name: 'area', type: Types::INTEGER, nullable: true)]
     #[Groups(['read'])]
-    private ?int $area;
+    private ?int $area = null;
 
     #[ORM\Column(name: 'balcony', type: Types::BOOLEAN, options: ['deafult' => false])]
     #[Groups(['read'])]
@@ -71,7 +71,7 @@ class Property extends BaseEntity
 
     #[ORM\ManyToOne(targetEntity: Location::class, inversedBy: 'properties')]
     #[Groups(['read'])]
-    private ?Location $location;
+    private ?Location $location = null;
 
     /**
      * @var ArrayCollection<int, Advert>

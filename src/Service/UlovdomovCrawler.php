@@ -153,8 +153,8 @@ final class UlovdomovCrawler extends CrawlerBase implements CrawlerInterface
                     $street = $ad['street']['label'];
                 }
                 if (!empty($ad['lat']) && !empty($ad['lng'])) {
-                    $latitude = $ad['lat'];
-                    $longitude = $ad['lng'];
+                    $latitude = (string) $ad['lat'];
+                    $longitude = (string) $ad['lng'];
                 }
                 $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
                 if (null === $location) {

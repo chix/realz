@@ -48,23 +48,23 @@ class Advert extends BaseEntity
 
     #[ORM\Column(name: 'description', type: Types::TEXT, nullable: true)]
     #[Groups(['read'])]
-    private ?string $description;
+    private ?string $description = null;
 
     #[ORM\Column(name: 'price', type: Types::INTEGER, nullable: true)]
     #[Groups(['read'])]
-    private ?int $price;
+    private ?int $price = null;
 
     #[ORM\Column(name: 'previous_price', type: Types::INTEGER, nullable: true)]
     #[Groups(['read'])]
-    private ?int $previousPrice;
+    private ?int $previousPrice = null;
 
     #[ORM\Column(name: 'currency', type: Types::STRING, length: 8, nullable: true)]
     #[Groups(['read'])]
-    private ?string $currency;
+    private ?string $currency = null;
 
     #[ORM\ManyToOne(targetEntity: Source::class, inversedBy: 'adverts')]
     #[Groups(['read'])]
-    private ?Source $source;
+    private ?Source $source = null;
 
     #[ORM\Column(name: 'sourceUrl', type: Types::STRING, length: 1024)]
     #[Groups(['read'])]
@@ -76,7 +76,7 @@ class Advert extends BaseEntity
 
     #[ORM\ManyToOne(targetEntity: Property::class, inversedBy: 'adverts')]
     #[Groups(['read'])]
-    private ?Property $property;
+    private ?Property $property = null;
 
     public function getId(): int
     {

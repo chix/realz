@@ -65,22 +65,22 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         /** @var City $brno */
         $brno = $this->cityRepository->findOneByName('Brno');
         $dispositionMap = [
-            'Garsoniéra' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1),
-            '1+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_kk),
-            '1+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_1),
-            '2+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_kk),
-            '2+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_1),
-            '3+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_kk),
-            '3+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_1),
-            '4+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_kk),
-            '4+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_1),
-            '5+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_5_kk),
-            '5+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_5_1),
-            '6+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
-            '6+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
-            '7+kk' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
-            '7+1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
-            'Ostatní' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_other),
+            'GARSONIERA' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1),
+            'DISP_1_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_kk),
+            'DISP_1_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_1),
+            'DISP_2_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_kk),
+            'DISP_2_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_2_1),
+            'DISP_3_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_kk),
+            'DISP_3_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_3_1),
+            'DISP_4_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_kk),
+            'DISP_4_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_4_1),
+            'DISP_5_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_5_kk),
+            'DISP_5_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_5_1),
+            'DISP_6_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
+            'DISP_6_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
+            'DISP_7_KK' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
+            'DISP_7_1' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_6),
+            'OSTATNI' => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_other),
         ];
         $constructionBrick = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_BRICK);
         $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
@@ -107,20 +107,19 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $this->logger->debug('Could not load list URL: '.$listUrl);
                 continue;
             }
-            $listDomNodes = (array) $listDom->find('article.product');
+            $listDomNodes = (array) $listDom->find('article.propertyCard');
             if (empty($listDomNodes)) {
                 $this->logger->debug('Empty nodes on URL: '.$listUrl);
                 continue;
             }
 
             foreach ($listDomNodes as $node) {
-                $detailPath = trim($node->find('div.product__body--left .product__title a', 0)->href);
-                $detailUrl = $this->constructDetailUrl($detailPath);
+                $detailUrl = trim($node->find('h2 a', 0)->href);
                 $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                 if (null !== $existingAdvert) {
                     $currentPrice = null;
 
-                    $priceNode = $node->find('div.product__body--left .product__value', 0);
+                    $priceNode = $node->find('div.propertyPrice span', 0);
                     if ($priceNode) {
                         $priceRaw = trim(strip_tags($priceNode->innertext));
                         $currentPrice = intval(preg_replace('/\D/', '', $priceRaw));
@@ -144,9 +143,19 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $this->logger->debug('Could not load detail URL: '.$detailUrl);
                     continue;
                 }
-                $mainNode = $detailDom->find('main[role=main] article[role=article] > .main__container', 0);
+                $mainNode = $detailDom->find('main', 0);
                 if (null === $mainNode) {
                     $this->logger->debug('No main node on URL: '.$detailUrl);
+                    continue;
+                }
+                $scriptNode = $detailDom->find('script#__NEXT_DATA__', 0);
+                if (null === $scriptNode) {
+                    $this->logger->debug('No script node on URL: '.$detailUrl);
+                    continue;
+                }
+                $scriptData = json_decode($scriptNode->innertext, true);
+                if (!$scriptData) {
+                    $this->logger->debug('Could not parse script node data on URL: '.$detailUrl);
                     continue;
                 }
 
@@ -158,85 +167,47 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                     $property->setType($propertyTypeMap[$propertyType]);
                 }
 
-                $street = $latitude = $longitude = null;
-                $titleNode = $mainNode->find('[data-element="detail-title"]', 0);
-                if ($titleNode) {
-                    $streetNode = $titleNode->find('h2', 0);
-                    if ($streetNode) {
-                        $street = $streetNode->innertext;
-                    }
-                }
-                $mapNode = $mainNode->find('div#map', 0);
-                if ($mapNode) {
-                    $latitude = $mapNode->getAttribute('data-lat');
-                    $longitude = $mapNode->getAttribute('data-lng');
-                }
-                $location = $this->locationRepository->findLocation($brno, $street, $latitude, $longitude);
+                $street = $scriptData['props']['pageProps']['origAdvert']['address'] ?? null;
+                $latitude = $scriptData['props']['pageProps']['origAdvert']['gps']['lat'] ?? null;
+                $longitude = $scriptData['props']['pageProps']['origAdvert']['gps']['lng'] ?? null;
+                $location = $this->locationRepository->findLocation($brno, $street, $latitude ? strval($latitude) : null, $longitude ? strval($longitude) : null);
                 if (null === $location) {
                     $location = new Location();
                     $location->setCity($brno);
                     $location->setStreet($street);
-                    $location->setLatitude($latitude);
-                    $location->setLongitude($longitude);
+                    $location->setLatitude($latitude ? strval($latitude) : null);
+                    $location->setLongitude($longitude ? strval($longitude) : null);
                 }
                 $property->setLocation($location);
 
-                $cityDistrict = '';
-                $itemNodes = (array) $mainNode->find('#detail-parameters div.row.param');
-                foreach ($itemNodes as $itemNode) {
-                    $itemHeading = '';
-                    $itemValue = '';
-                    $itemHeadingNode = $itemNode->find('.param-title', 0);
-                    $itemValueNode = $itemNode->find('.param-value', 0);
-                    if ($itemHeadingNode) {
-                        $itemHeading = trim($itemHeadingNode->innertext);
-                    }
-                    if ($itemValueNode) {
-                        $itemValue = trim($itemValueNode->innertext);
-                    }
-                    switch (mb_strtolower($itemHeading)) {
-                        case 'dispozice':
-                            if (isset($dispositionMap[$itemValue])) {
-                                $property->setDisposition($dispositionMap[$itemValue]);
-                            } else {
-                                $property->setDisposition($dispositionMap['Ostatní']);
-                            }
-                            break;
-                        case 'typ budovy':
-                            if (in_array(mb_strtolower($itemValue), ['panel'])) {
-                                $property->setConstruction($constructionPanel);
-                            } elseif (in_array(mb_strtolower($itemValue), ['cihla'])) {
-                                $property->setConstruction($constructionBrick);
-                            }
-                            break;
-                        case 'plocha':
-                            $area = str_replace([' ', 'm²'], ['', ''], $itemValue);
-                            $property->setArea(intval($area));
-                            break;
-                        case 'typ vlastnictví':
-                            $property->setOwnership($itemValue);
-                            break;
-                        case 'podlaží':
-                            $property->setFloor(intval($itemValue));
-                            break;
-                        case 'balkón':
-                            $property->setBalcony('ano' === mb_strtolower($itemValue));
-                            break;
-                        case 'terasa':
-                            $property->setTerrace('ano' === mb_strtolower($itemValue));
-                            break;
-                        case 'městská část':
-                            $cityDistrict = trim($itemValue);
-                            break;
-                    }
+                $cityDistrict = $scriptData['props']['pageProps']['origAdvert']['regionTree'][3]['name'] ?? '';
+                $disposition = $scriptData['props']['pageProps']['origAdvert']['disposition'] ?? 'OSTATNI';
+                if (isset($dispositionMap[$disposition])) {
+                    $property->setDisposition($dispositionMap[$disposition]);
                 }
+                $property->setArea($scriptData['props']['pageProps']['origAdvert']['surface'] ?? null);
+                $construction = $scriptData['props']['pageProps']['origAdvert']['construction'] ?? null;
+                if ('PANEL' === $construction) {
+                    $property->setConstruction($constructionPanel);
+                } elseif ('BRICK' === $construction) {
+                    $property->setConstruction($constructionBrick);
+                }
+                $property->setOwnership($scriptData['props']['pageProps']['origAdvert']['ownership'] ?? null);
+                $property->setFloor($scriptData['props']['pageProps']['origAdvert']['etage'] ?? null);
+                $property->setBalcony($scriptData['props']['pageProps']['origAdvert']['balcony'] ?? false);
+                $property->setTerrace($scriptData['props']['pageProps']['origAdvert']['terrace'] ?? false);
+                $property->setLoggia($scriptData['props']['pageProps']['origAdvert']['loggia'] ?? false);
+                $property->setParking($scriptData['props']['pageProps']['origAdvert']['parging'] ?? false);
+                $property->setElevator($scriptData['props']['pageProps']['origAdvert']['lift'] ?? false);
+
                 $images = [];
-                $imageNodes = (array) $detailDom->find('main[role=main] article[role=article] .detail-gallery .detail-slick-item img');
-                foreach ($imageNodes as $imageNode) {
-                    $tmp = new \stdClass();
-                    $tmp->image = trim($imageNode->src);
-                    $tmp->thumbnail = $tmp->image;
-                    $images[] = $tmp;
+                foreach ($scriptData['props']['pageProps']['origAdvert']['publicImages'] ?? [] as $image) {
+                    if ($image['url'] ?? null) {
+                        $tmp = new \stdClass();
+                        $tmp->image = $image['url'];
+                        $tmp->thumbnail = $tmp->image;
+                        $images[] = $tmp;
+                    }
                 }
                 $property->setImages($images);
 
@@ -246,21 +217,10 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $advert->setSourceUrl($detailUrl);
                 $advert->setExternalUrl($detailUrl);
                 $advert->setProperty($property);
-                if ($titleNode) {
-                    $advert->setTitle(trim((string) $titleNode->find('h1', 0)->innertext));
-
-                    $priceNode = $titleNode->find('.detail-price', 0);
-                    if ($priceNode) {
-                        $priceRaw = trim($priceNode->innertext);
-                        $price = intval(preg_replace('/\D/', '', $priceRaw));
-                        $advert->setPrice($price);
-                        $advert->setCurrency('CZK');
-                    }
-                }
-                $descriptionNode = $mainNode->find('#description p', 0);
-                if ($descriptionNode) {
-                    $advert->setDescription($this->normalizeHtmlString($descriptionNode->innertext));
-                }
+                $advert->setTitle($scriptData['props']['pageProps']['origAdvert']['imageAltText'] ?? null);
+                $advert->setPrice($scriptData['props']['pageProps']['origAdvert']['price'] ?? null);
+                $advert->setCurrency('CZK');
+                $advert->setDescription($scriptData['props']['pageProps']['origAdvert']['description'] ?? null);
                 if ($existingAdvert) {
                     $advert->setPreviousPrice($existingAdvert->getPrice());
                 }
@@ -288,20 +248,12 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         $parameters = [
             'ad_type' => 'nabidka-'.$advertTypeParamMap[$advertType],
             'property_type' => $propertyTypeParamMap[$propertyType],
-            'region' => 'jihomoravsky-kraj',
             'disctrict' => 'okres-brno-mesto',
         ];
-        $url = $this->getSourceUrl().vsprintf('/vypis/%s/%s/%s/%s', array_values($parameters));
+        $url = $this->getSourceUrl().vsprintf('/vypis/%s/%s/%s', array_values($parameters));
         if ($page > 1) {
             $url .= '?page='.$page;
         }
-
-        return $url;
-    }
-
-    protected function constructDetailUrl(string $path): string
-    {
-        $url = $this->getSourceUrl().$path;
 
         return $url;
     }

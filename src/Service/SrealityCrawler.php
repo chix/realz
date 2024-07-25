@@ -184,8 +184,8 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                         $street = $adDetail['locality']['value'];
                     }
                     if (!empty($adDetail['map']) && isset($adDetail['map']['lat']) && isset($adDetail['map']['lon'])) {
-                        $latitude = $adDetail['map']['lat'];
-                        $longitude = $adDetail['map']['lon'];
+                        $latitude = (string) $adDetail['map']['lat'];
+                        $longitude = (string) $adDetail['map']['lon'];
                     }
                     $location = $this->locationRepository->findLocation($city, $street, $latitude, $longitude);
                     if (null === $location) {

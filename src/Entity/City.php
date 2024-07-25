@@ -48,7 +48,7 @@ class City extends BaseEntity
 
     #[ORM\ManyToOne(targetEntity: District::class, inversedBy: 'cities')]
     #[Groups(['read'])]
-    private ?District $district;
+    private ?District $district = null;
 
     /**
      * @var ArrayCollection<int, CityDistrict>

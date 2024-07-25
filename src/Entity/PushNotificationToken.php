@@ -46,28 +46,28 @@ class PushNotificationToken extends BaseEntity
      * For system activation/deactivation.
      */
     #[ORM\Column(name: 'active', type: Types::BOOLEAN, options: ['deafult' => true])]
-    private bool $active;
+    private bool $active = true;
 
     #[ORM\Column(name: 'error_count', type: Types::INTEGER, options: ['deafult' => 0])]
-    private int $errorCount;
+    private int $errorCount = 0;
 
     /**
      * @var array<mixed>|null
      */
     #[ORM\Column(name: 'last_response', type: Types::JSON, nullable: true)]
-    private ?array $lastResponse;
+    private ?array $lastResponse = null;
 
     /**
      * For user activation/deactivation.
      */
     #[ORM\Column(name: 'enabled', type: Types::BOOLEAN, options: ['deafult' => true])]
-    private bool $enabled;
+    private bool $enabled = true;
 
     /**
      * @var array<mixed>|null
      */
     #[ORM\Column(name: 'filters', type: Types::JSON, nullable: true)]
-    private ?array $filters;
+    private ?array $filters = null;
 
     /**
      * @var ArrayCollection<int, Advert>
