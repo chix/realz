@@ -27,6 +27,10 @@ class Location extends BaseEntity
     #[Groups(['read'])]
     private ?string $street = null;
 
+    #[ORM\ManyToOne(targetEntity: District::class, inversedBy: 'locations')]
+    #[Groups(['read'])]
+    private ?District $district = null;
+
     #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'locations')]
     #[Groups(['read'])]
     private ?City $city = null;
@@ -75,6 +79,18 @@ class Location extends BaseEntity
     public function getCity(): ?City
     {
         return $this->city;
+    }
+
+    public function setDistrict(?District $district): self
+    {
+        $this->district = $district;
+
+        return $this;
+    }
+
+    public function getDistrict(): ?District
+    {
+        return $this->district;
     }
 
     public function addProperty(Property $property): self

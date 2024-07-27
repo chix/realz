@@ -13,6 +13,9 @@ use App\Entity\PropertyDisposition;
 use App\Entity\PushNotificationToken;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
+use App\Repository\DistrictRepository;
+use App\Repository\PropertySubtypeRepository;
+use App\Repository\PropertyTypeRepository;
 use App\Repository\PushNotificationTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -26,8 +29,11 @@ final class PushNotificationTokenProcessor implements ProcessorInterface
     public function __construct(
         private EntityManagerInterface $entityManager,
         private CityRepository $cityRepository,
+        private DistrictRepository $districtRepository,
         private PushNotificationTokenRepository $tokenRepository,
         private AdvertTypeRepository $advertTypeRepository,
+        private PropertyTypeRepository $propertyTypeRepository,
+        private PropertySubtypeRepository $propertySubtypeRepository,
         private ValidatorInterface $validator
     ) {
     }
@@ -81,27 +87,53 @@ final class PushNotificationTokenProcessor implements ProcessorInterface
             return $filters;
         }
 
-        foreach ($rawFilters as $rawCityFilters) {
+        foreach ($rawFilters as $rawLocationFilters) {
             /** @var City|null $city */
             $city = null;
-            ksort($rawCityFilters);
-            /** @var array<string,mixed> $cityFilters */
-            $cityFilters = [];
-            foreach ($rawCityFilters as $type => $filter) {
+            ksort($rawLocationFilters);
+            /** @var array<string,mixed> $locationFilters */
+            $locationFilters = [];
+            foreach ($rawLocationFilters as $type => $filter) {
                 switch ($type) {
                     case 'advertType':
                         $advertType = $this->advertTypeRepository->findOneByCode($filter);
                         if (null === $advertType) {
                             throw $this->createValidationException('filters', "Advert type {$filter} not found.");
                         }
-                        $cityFilters[$type] = $advertType->getCode();
+                        $locationFilters[$type] = $advertType->getCode();
+                        break;
+                    case 'propertyType':
+                        $propertyType = $this->propertyTypeRepository->findOneByCode($filter);
+                        if (null === $propertyType) {
+                            throw $this->createValidationException('filters', "Property type {$filter} not found.");
+                        }
+                        $locationFilters[$type] = $propertyType->getCode();
+                        break;
+                    case 'propertySubtype':
+                        if (!empty($filter)) {
+                            $locationFilters[$type] = [];
+                            foreach ($filter as $subtypeCode) {
+                                $propertySubtype = $this->propertySubtypeRepository->findOneByCode($subtypeCode);
+                                if (null === $propertySubtype) {
+                                    throw $this->createValidationException('filters', "Property subtype {$subtypeCode} not found.");
+                                }
+                                $locationFilters[$type][] = $propertySubtype->getCode();
+                            }
+                        }
                         break;
                     case 'cityCode':
                         $city = $this->cityRepository->findOneByCode($filter);
                         if (null === $city) {
                             throw $this->createValidationException('filters', "City with code {$filter} not found.");
                         }
-                        $cityFilters[$type] = $city->getCode();
+                        $locationFilters[$type] = $city->getCode();
+                        break;
+                    case 'districtCode':
+                        $district = $this->districtRepository->findOneByCode($filter);
+                        if (null === $district) {
+                            throw $this->createValidationException('filters', "District with code {$filter} not found.");
+                        }
+                        $locationFilters[$type] = $district->getCode();
                         break;
                     case 'cityDistrict':
                         if (empty($filter) || null === $city) {
@@ -109,22 +141,22 @@ final class PushNotificationTokenProcessor implements ProcessorInterface
                         }
                         $cityDistrictCodes = $city->getCityDistrictCodes();
                         $cityDistrictCodes[] = CityDistrict::CODE_UNASSIGNED;
-                        $cityFilters[$type] = [];
+                        $locationFilters[$type] = [];
                         foreach ($filter as $disctrictCode) {
                             if (!in_array($disctrictCode, $cityDistrictCodes)) {
                                 throw $this->createValidationException('filters', "City district {$disctrictCode} not found.");
                             }
-                            $cityFilters[$type][] = $disctrictCode;
+                            $locationFilters[$type][] = $disctrictCode;
                         }
                         break;
                     case 'disposition':
                         if (!empty($filter)) {
-                            $cityFilters[$type] = [];
+                            $locationFilters[$type] = [];
                             foreach ($filter as $dispositionCode) {
                                 if (!in_array($dispositionCode, PropertyDisposition::getCodes())) {
                                     throw $this->createValidationException('filters', "Disposition {$dispositionCode} not found.");
                                 }
-                                $cityFilters[$type][] = $dispositionCode;
+                                $locationFilters[$type][] = $dispositionCode;
                             }
                         }
                         break;
@@ -132,20 +164,20 @@ final class PushNotificationTokenProcessor implements ProcessorInterface
                         if (!isset($filter['gte']) && !isset($filter['lte'])) {
                             throw $this->createValidationException('filters', 'Either gte or lte have to be set on the price filter.');
                         }
-                        $cityFilters[$type] = [];
+                        $locationFilters[$type] = [];
                         if (isset($filter['gte'])) {
-                            $cityFilters[$type]['gte'] = intval($filter['gte']);
+                            $locationFilters[$type]['gte'] = intval($filter['gte']);
                         }
                         if (isset($filter['lte'])) {
-                            $cityFilters[$type]['lte'] = intval($filter['lte']);
+                            $locationFilters[$type]['lte'] = intval($filter['lte']);
                         }
                         break;
                     default:
                         throw $this->createValidationException('filters', "Unsupported filter type {$type}.");
                 }
             }
-            if (!empty($cityFilters)) {
-                $filters[] = $cityFilters;
+            if (!empty($locationFilters)) {
+                $filters[] = $locationFilters;
             }
         }
 

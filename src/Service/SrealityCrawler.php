@@ -10,15 +10,18 @@ use App\Entity\Location;
 use App\Entity\Property;
 use App\Entity\PropertyConstruction;
 use App\Entity\PropertyDisposition;
+use App\Entity\PropertySubtype;
 use App\Entity\PropertyType;
 use App\Entity\Source;
 use App\Repository\AdvertRepository;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\CityRepository;
+use App\Repository\DistrictRepository;
 use App\Repository\LocationRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
 use App\Repository\PropertyRepository;
+use App\Repository\PropertySubtypeRepository;
 use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -57,6 +60,21 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
             'district_id' => 31,
             AdvertType::TYPE_RENT => false,
         ],
+        'CZ0643' => [ // Brno-venkov
+            'region_id' => 14,
+            'district_id' => 73,
+            AdvertType::TYPE_RENT => false,
+        ],
+        'CZ0641' => [ // Blansko
+            'region_id' => 14,
+            'district_id' => 71,
+            AdvertType::TYPE_RENT => false,
+        ],
+        'CZ0646' => [ // Vyskov
+            'region_id' => 14,
+            'district_id' => 76,
+            AdvertType::TYPE_RENT => false,
+        ],
     ];
 
     /** @var bool */
@@ -69,9 +87,11 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         protected PropertyConstructionRepository $propertyConstructionRepository,
         protected PropertyDispositionRepository $propertyDispositionRepository,
         protected PropertyTypeRepository $propertyTypeRepository,
+        protected PropertySubtypeRepository $propertySubtypeRepository,
         protected string $sourceUrl,
         private AdvertRepository $advertRepository,
         private CityRepository $cityRepository,
+        private DistrictRepository $districtRepository,
         private LocationRepository $locationRepository,
         private PropertyRepository $propertyRepository,
         private SourceRepository $sourceRepository
@@ -83,15 +103,17 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
             $propertyConstructionRepository,
             $propertyDispositionRepository,
             $propertyTypeRepository,
+            $propertySubtypeRepository,
             $sourceUrl
         );
     }
 
-    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?string $propertySubtype, ?string $locationCode = null): array
     {
         $srealitySource = $this->sourceRepository->findOneByCode(Source::SOURCE_SREALITY);
         $advertTypeMap = $this->getAdvertTypeMap();
         $propertyTypeMap = $this->getPropertyTypeMap();
+        $propertySubtypeMap = $this->getPropertySubtypeMap();
         $dispositionMap = [
             1 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1),
             2 => $this->propertyDispositionRepository->findOneByCode(PropertyDisposition::DISPOSITION_1_kk),
@@ -111,21 +133,25 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         $constructionPanel = $this->propertyConstructionRepository->findOneByCode(PropertyConstruction::CONSTRUCTION_PANEL);
 
         $adverts = [];
-        foreach (self::CONFIG as $code => $cityConfig) {
-            if ($cityCode && $code !== $cityCode) {
+        foreach (self::CONFIG as $code => $locationConfig) {
+            if ($locationCode && (string) $code !== (string) $locationCode) {
                 continue;
             }
-            if (isset($cityConfig[$advertType]) && !$cityConfig[$advertType]) {
+            if (isset($locationConfig[$advertType]) && !$locationConfig[$advertType]) {
                 continue;
             }
             $city = $this->cityRepository->findOneByCode($code);
+            $district = null;
             if (!$city) {
-                $this->logger->debug('Could not load city: '.$code);
-                continue;
+                $district = $this->districtRepository->findOneByCode($code);
+                if (!$district) {
+                    $this->logger->debug('Could not load city or district: '.$code);
+                    continue;
+                }
             }
             $page = 1;
             $limit = 20;
-            $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType, $cityConfig['region_id'], $cityConfig['district_id']);
+            $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType, $locationConfig['region_id'], $locationConfig['district_id'], $propertySubtype);
             $list = json_decode((string) file_get_contents($listUrl), true);
             if (empty($list)) {
                 $this->logger->debug('Could not load list URL: '.$listUrl);
@@ -139,7 +165,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
 
             foreach ($pages as $page) {
                 if ($page > 1) {
-                    $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType, $cityConfig['region_id'], $cityConfig['district_id']);
+                    $listUrl = $this->constructListUrl($page, $limit, $advertType, $propertyType, $locationConfig['region_id'], $locationConfig['district_id'], $propertySubtype);
                     $list = json_decode((string) file_get_contents($listUrl), true);
 
                     if (empty($list)) {
@@ -177,6 +203,9 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     if (null === $property) {
                         $property = new Property();
                         $property->setType($propertyTypeMap[$propertyType]);
+                        if ($propertySubtype) {
+                            $property->setSubtype($propertySubtypeMap[$propertySubtype]);
+                        }
                     }
 
                     $street = $latitude = $longitude = null;
@@ -187,10 +216,11 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                         $latitude = (string) $adDetail['map']['lat'];
                         $longitude = (string) $adDetail['map']['lon'];
                     }
-                    $location = $this->locationRepository->findLocation($city, $street, $latitude, $longitude);
+                    $location = $this->locationRepository->findLocation($city, $district, $street, $latitude, $longitude);
                     if (null === $location) {
                         $location = new Location();
                         $location->setCity($city);
+                        $location->setDistrict($district);
                         $location->setStreet($street);
                         $location->setLatitude($latitude);
                         $location->setLongitude($longitude);
@@ -294,7 +324,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         return $adverts;
     }
 
-    protected function constructListUrl(int $page, int $limit, string $advertType, string $propertyType, int $regionId, int $districtId): string
+    protected function constructListUrl(int $page, int $limit, string $advertType, string $propertyType, int $regionId, int $districtId, ?string $propertySubtype): string
     {
         $advertTypeParamMap = [
             AdvertType::TYPE_SALE => 1,
@@ -313,6 +343,36 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
             'per_page' => $limit,
             'page' => $page,
         ];
+        switch ($propertySubtype) {
+            case PropertySubtype::SUBTYPE_HOUSE:
+                $parameters['category_sub_cb'] = '37|39';
+                break;
+            case PropertySubtype::SUBTYPE_COTTAGE:
+                $parameters['category_sub_cb'] = '43|33';
+                break;
+            case PropertySubtype::SUBTYPE_GARRAGE:
+                $parameters['category_main_cb'] = '5';
+                $parameters['category_sub_cb'] = '52|34';
+                break;
+            case PropertySubtype::SUBTYPE_FARM:
+                $parameters['category_sub_cb'] = '44';
+                break;
+            case PropertySubtype::SUBTYPE_PROPERTY:
+                $parameters['category_sub_cb'] = '19';
+                break;
+            case PropertySubtype::SUBTYPE_FIELD:
+                $parameters['category_sub_cb'] = '20|22';
+                break;
+            case PropertySubtype::SUBTYPE_WOODS:
+                $parameters['category_sub_cb'] = '21';
+                break;
+            case PropertySubtype::SUBTYPE_PLANTATION:
+                $parameters['category_sub_cb'] = '48';
+                break;
+            case PropertySubtype::SUBTYPE_GARDEN:
+                $parameters['category_sub_cb'] = '23';
+                break;
+        }
 
         $url = $this->getSourceUrl().'?'.http_build_query($parameters);
 

@@ -25,6 +25,10 @@ class Property extends BaseEntity
     #[Groups(['read'])]
     private ?PropertyType $type = null;
 
+    #[ORM\ManyToOne(targetEntity: PropertySubtype::class, inversedBy: 'properties')]
+    #[Groups(['read'])]
+    private ?PropertySubtype $subtype = null;
+
     #[ORM\ManyToOne(targetEntity: PropertyDisposition::class, inversedBy: 'properties')]
     #[Groups(['read'])]
     private ?PropertyDisposition $disposition = null;
@@ -204,6 +208,18 @@ class Property extends BaseEntity
     public function getType(): ?PropertyType
     {
         return $this->type;
+    }
+
+    public function setSubtype(?PropertySubtype $subtype): self
+    {
+        $this->subtype = $subtype;
+
+        return $this;
+    }
+
+    public function getSubtype(): ?PropertySubtype
+    {
+        return $this->subtype;
     }
 
     public function setDisposition(?PropertyDisposition $disposition): self

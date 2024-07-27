@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\AdvertType;
+use App\Entity\PropertySubtype;
 use App\Entity\PropertyType;
 use App\Service\BazosCrawler;
 use App\Service\BezrealitkyCrawler;
@@ -29,15 +30,18 @@ final class ImportNewAdvertsCommand extends Command
     protected static $activeCrawlers = ['sreality', 'bezrealitky', 'bazos', 'ceskereality', 'ulovdomov'];
 
     /**
-     * @var array<string,int>
+     * @var array<string,string>
      */
-    protected static $supportedCities = [
-        'brno' => 582786,
-        'olomouc' => 500496,
-        'pardubice' => 555134,
-        'hradec' => 569810,
-        'hradiste' => 592005,
-        'nachod' => 573868,
+    protected static $supportedLocations = [
+        'brno' => '582786',
+        'olomouc' => '500496',
+        'pardubice' => '555134',
+        'hradec' => '569810',
+        'hradiste' => '592005',
+        'nachod' => '573868',
+        'brno-venkov' => 'CZ0643',
+        'blansko' => 'CZ0641',
+        'vyskov' => 'CZ0646',
     ];
 
     public function __construct(
@@ -63,10 +67,10 @@ final class ImportNewAdvertsCommand extends Command
                 'Limit sources, allowed values: '.implode(', ', self::$activeCrawlers)
             )
             ->addOption(
-                'city',
-                'c',
+                'location',
+                'l',
                 InputOption::VALUE_REQUIRED,
-                'Limit city, allowed values: '.implode(', ', array_keys(self::$supportedCities))
+                'Limit location, allowed values: '.implode(', ', array_keys(self::$supportedLocations))
             )
         ;
     }
@@ -83,10 +87,10 @@ final class ImportNewAdvertsCommand extends Command
                 $output->writeln(sprintf('<comment>Crawler "%s" not found.</comment>', $code));
             }
         }
-        /** @var string|null $city */
-        $city = $input->getOption('city');
-        if (null !== $city && !array_key_exists($city, self::$supportedCities)) {
-            $output->writeln(sprintf('<comment>City "%s" not supported.</comment>', $city));
+        /** @var string|null $location */
+        $location = $input->getOption('location');
+        if (null !== $location && !array_key_exists($location, self::$supportedLocations)) {
+            $output->writeln(sprintf('<comment>Location "%s" not supported.</comment>', $location));
         }
         if (empty($crawlers)) {
             if (!empty($sources)) {
@@ -100,10 +104,42 @@ final class ImportNewAdvertsCommand extends Command
         }
 
         foreach ($crawlers as $crawler) { /* @var CrawlerInterface $crawler */
-            $this->logger->debug('Starting '.$crawler->getIdentifier(), ($city) ? [$city] : []);
+            $this->logger->debug('Starting '.$crawler->getIdentifier(), ($location) ? [$location] : []);
 
-            $adverts = $crawler->getNewAdverts(AdvertType::TYPE_SALE, PropertyType::TYPE_FLAT, $city ? self::$supportedCities[$city] : null);
-            $adverts = array_merge($adverts, $crawler->getNewAdverts(AdvertType::TYPE_RENT, PropertyType::TYPE_FLAT, $city ? self::$supportedCities[$city] : null));
+            $adverts = [];
+            // flats
+            if (null === $location || 'CZ' !== substr(self::$supportedLocations[$location], 0, 2)) { // all cities
+                $adverts = array_merge($adverts, $crawler->getNewAdverts(
+                    AdvertType::TYPE_SALE,
+                    PropertyType::TYPE_FLAT,
+                    null,
+                    $location ? self::$supportedLocations[$location] : null
+                ));
+                $adverts = array_merge($adverts, $crawler->getNewAdverts(
+                    AdvertType::TYPE_RENT,
+                    PropertyType::TYPE_FLAT,
+                    null,
+                    $location ? self::$supportedLocations[$location] : null
+                ));
+            }
+
+            // cottages + gardens
+            if ((null !== $location && ('CZ' === substr(self::$supportedLocations[$location], 0, 2) || 'brno' === $location)) // regions + brno
+                && $crawler instanceof SrealityCrawler
+            ) {
+                $adverts = array_merge($adverts, $crawler->getNewAdverts(
+                    AdvertType::TYPE_SALE,
+                    PropertyType::TYPE_HOUSE,
+                    PropertySubtype::SUBTYPE_COTTAGE,
+                    $location ? self::$supportedLocations[$location] : null
+                ));
+                $adverts = array_merge($adverts, $crawler->getNewAdverts(
+                    AdvertType::TYPE_SALE,
+                    PropertyType::TYPE_LAND,
+                    PropertySubtype::SUBTYPE_GARDEN,
+                    $location ? self::$supportedLocations[$location] : null
+                ));
+            }
 
             $this->logger->debug(count($adverts).' new ads found');
 

@@ -27,7 +27,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
     normalizationContext: ['groups' => ['read']],
     paginationItemsPerPage: 20,
 )]
-#[ApiFilter(SearchFilter::class, properties: ['type.code' => 'exact', 'property.location.city.code' => 'exact'])]
+#[ApiFilter(SearchFilter::class, properties: [
+    'type.code' => 'exact',
+    'property.location.city.code' => 'exact',
+    'property.location.district.code' => 'exact',
+    'property.type.code' => 'exact',
+    'property.subtype.code' => 'exact',
+])]
 #[ApiFilter(ExistsFilter::class, properties: ['deletedAt'])]
 #[ApiFilter(OrderFilter::class, properties: ['id' => 'DESC'])]
 class Advert extends BaseEntity

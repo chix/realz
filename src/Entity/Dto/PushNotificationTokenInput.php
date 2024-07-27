@@ -33,9 +33,25 @@ final class PushNotificationTokenInput
                         'type' => 'string',
                         'example' => '582786',
                     ],
+                    'districtCode' => [
+                        'type' => 'string',
+                        'example' => 'CZ0643',
+                    ],
                     'advertType' => [
                         'type' => 'string',
                         'enum' => ['sale', 'rent'],
+                    ],
+                    'propertyType' => [
+                        'type' => 'string',
+                        'enum' => ['flat', 'house', 'land'],
+                    ],
+                    'propertySubtype' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'string',
+                            'enum' => ['house', 'cottage', 'garrage', 'farm', 'property', 'field', 'woods', 'plantation', 'garden', 'other'],
+                        ],
+                        'example' => ['house', 'cottage', 'garrage', 'other'],
                     ],
                     'price' => [
                         'type' => 'object',

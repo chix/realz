@@ -20,6 +20,7 @@ use App\Repository\LocationRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
 use App\Repository\PropertyRepository;
+use App\Repository\PropertySubtypeRepository;
 use App\Repository\PropertyTypeRepository;
 use App\Repository\SourceRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,6 +40,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
         protected PropertyConstructionRepository $propertyConstructionRepository,
         protected PropertyDispositionRepository $propertyDispositionRepository,
         protected PropertyTypeRepository $propertyTypeRepository,
+        protected PropertySubtypeRepository $propertySubtypeRepository,
         protected string $sourceUrl,
         private AdvertRepository $advertRepository,
         private CityRepository $cityRepository,
@@ -53,11 +55,12 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
             $propertyConstructionRepository,
             $propertyDispositionRepository,
             $propertyTypeRepository,
+            $propertySubtypeRepository,
             $sourceUrl
         );
     }
 
-    public function getNewAdverts(string $advertType, string $propertyType, ?int $cityCode = null): array
+    public function getNewAdverts(string $advertType, string $propertyType, ?string $propertySubtype, ?string $locationCode = null): array
     {
         $bezrealitkySource = $this->sourceRepository->findOneByCode(Source::SOURCE_BEZREALITKY);
         $advertTypeMap = $this->getAdvertTypeMap();
@@ -170,7 +173,7 @@ final class BezrealitkyCrawler extends CrawlerBase implements CrawlerInterface
                 $street = $scriptData['props']['pageProps']['origAdvert']['address'] ?? null;
                 $latitude = $scriptData['props']['pageProps']['origAdvert']['gps']['lat'] ?? null;
                 $longitude = $scriptData['props']['pageProps']['origAdvert']['gps']['lng'] ?? null;
-                $location = $this->locationRepository->findLocation($brno, $street, $latitude ? strval($latitude) : null, $longitude ? strval($longitude) : null);
+                $location = $this->locationRepository->findLocation($brno, null, $street, $latitude ? strval($latitude) : null, $longitude ? strval($longitude) : null);
                 if (null === $location) {
                     $location = new Location();
                     $location->setCity($brno);

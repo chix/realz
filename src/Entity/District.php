@@ -41,11 +41,18 @@ class District extends BaseEntity
     #[ORM\OneToMany(targetEntity: City::class, mappedBy: 'district')]
     private Collection $cities;
 
+    /**
+     * @var ArrayCollection<int, Location>
+     */
+    #[ORM\OneToMany(targetEntity: Location::class, mappedBy: 'district')]
+    private Collection $locations;
+
     public function __construct()
     {
         parent::__construct();
 
         $this->cities = new ArrayCollection();
+        $this->locations = new ArrayCollection();
     }
 
     public function getId(): int
@@ -95,6 +102,26 @@ class District extends BaseEntity
     public function getCities(): Collection
     {
         return $this->cities;
+    }
+
+    public function addLocation(Location $location): self
+    {
+        $this->locations[] = $location;
+
+        return $this;
+    }
+
+    public function removeLocation(Location $location): void
+    {
+        $this->locations->removeElement($location);
+    }
+
+    /**
+     * @return ArrayCollection<int, Location>
+     */
+    public function getLocations(): Collection
+    {
+        return $this->locations;
     }
 
     public function setCode(string $code): self

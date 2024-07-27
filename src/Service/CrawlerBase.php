@@ -10,10 +10,12 @@ use App\Entity\CityDistrict;
 use App\Entity\Property;
 use App\Entity\PropertyConstruction;
 use App\Entity\PropertyDisposition;
+use App\Entity\PropertySubtype;
 use App\Entity\PropertyType;
 use App\Repository\AdvertTypeRepository;
 use App\Repository\PropertyConstructionRepository;
 use App\Repository\PropertyDispositionRepository;
+use App\Repository\PropertySubtypeRepository;
 use App\Repository\PropertyTypeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -27,6 +29,7 @@ abstract class CrawlerBase
         protected PropertyConstructionRepository $propertyConstructionRepository,
         protected PropertyDispositionRepository $propertyDispositionRepository,
         protected PropertyTypeRepository $propertyTypeRepository,
+        protected PropertySubtypeRepository $propertySubtypeRepository,
         protected string $sourceUrl
     ) {
     }
@@ -57,6 +60,48 @@ abstract class CrawlerBase
             PropertyType::TYPE_FLAT => $flat,
             PropertyType::TYPE_HOUSE => $house,
             PropertyType::TYPE_LAND => $land,
+        ];
+    }
+
+    /**
+     * @return PropertySubtype[]
+     */
+    protected function getPropertySubtypeMap(): array
+    {
+        /** @var PropertySubtype $house */
+        $house = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_HOUSE);
+        /** @var PropertySubtype $cottage */
+        $cottage = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_COTTAGE);
+        /** @var PropertySubtype $garrage */
+        $garrage = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_GARRAGE);
+        /** @var PropertySubtype $farm */
+        $farm = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_FARM);
+
+        /** @var PropertySubtype $property */
+        $property = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_PROPERTY);
+        /** @var PropertySubtype $field */
+        $field = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_FIELD);
+        /** @var PropertySubtype $woods */
+        $woods = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_WOODS);
+        /** @var PropertySubtype $plantation */
+        $plantation = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_PLANTATION);
+        /** @var PropertySubtype $garden */
+        $garden = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_GARDEN);
+
+        /** @var PropertySubtype $other */
+        $other = $this->propertySubtypeRepository->findOneByCode(PropertySubtype::SUBTYPE_OTHER);
+
+        return [
+            PropertySubtype::SUBTYPE_HOUSE => $house,
+            PropertySubtype::SUBTYPE_COTTAGE => $cottage,
+            PropertySubtype::SUBTYPE_GARRAGE => $garrage,
+            PropertySubtype::SUBTYPE_FARM => $farm,
+            PropertySubtype::SUBTYPE_PROPERTY => $property,
+            PropertySubtype::SUBTYPE_FIELD => $field,
+            PropertySubtype::SUBTYPE_WOODS => $woods,
+            PropertySubtype::SUBTYPE_PLANTATION => $plantation,
+            PropertySubtype::SUBTYPE_GARDEN => $garden,
+            PropertySubtype::SUBTYPE_OTHER => $other,
         ];
     }
 
