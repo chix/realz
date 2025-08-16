@@ -181,12 +181,9 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $detailUrl = $this->constructDetailUrl($ad['hash_id']);
                     $existingAdvert = $this->advertRepository->findOneBySourceUrl($detailUrl, ['id' => 'DESC']);
                     if ($existingAdvert) {
-                        $currentPrice = null;
-                        if (!empty($ad['price_czk']) && 1 !== $ad['price_czk']['value_raw']) {
-                            $currentPrice = $ad['price_czk']['value_raw'];
-                        }
+                        $currentPrice = $ad['price_czk']['value_raw'] ?? null;
                         $existingPrice = $existingAdvert->getPrice();
-                        if ($currentPrice === $existingPrice) {
+                        if ($currentPrice === $existingPrice || $currentPrice === 1) {
                             continue;
                         }
                     }
@@ -194,6 +191,10 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $adDetail = json_decode((string) file_get_contents($detailUrl), true);
                     if (empty($adDetail)) {
                         $this->logger->debug('Could not load detail URL: '.$detailUrl, [$ad['hash_id']]);
+                        continue;
+                    }
+
+                    if ($existingAdvert && $existingAdvert->getPrice() === ($adDetail['price_czk']['value_raw'] ?? null)) {
                         continue;
                     }
 
@@ -295,8 +296,6 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     $advert->setSourceUrl($detailUrl);
                     $advert->setExternalUrl($this->constructExternalUrl(
                         $ad['hash_id'],
-                        'byt',
-                        (null !== $property->getDisposition()) ? $property->getDisposition()->getCode() : PropertyDisposition::DISPOSITION_other,
                         $adDetail['seo']['locality']
                     ));
                     $advert->setProperty($property);
@@ -306,10 +305,8 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     if (!empty($adDetail['text'])) {
                         $advert->setDescription($adDetail['text']['value']);
                     }
-                    if (!empty($adDetail['price_czk'])) {
-                        $advert->setPrice($adDetail['price_czk']['value_raw']);
-                        $advert->setCurrency('CZK');
-                    }
+                    $advert->setPrice($adDetail['price_czk']['value_raw'] ?? null);
+                    $advert->setCurrency('CZK');
                     if ($existingAdvert) {
                         $advert->setPreviousPrice($existingAdvert->getPrice());
                     }
@@ -386,17 +383,15 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
         return $url;
     }
 
-    protected function constructExternalUrl(int $id, string $type, string $subtype, string $locality): string
+    protected function constructExternalUrl(int $id, string $locality): string
     {
         $urlParts = parse_url($this->getSourceUrl());
         if (false === $urlParts || !isset($urlParts['scheme']) || !isset($urlParts['host'])) {
             return $this->getSourceUrl();
         }
-        $url = vsprintf('%s://%s/detail/prodej/%s/%s/%s/%d', [
+        $url = vsprintf('%s://%s/detail/prodej/ostatni/jine-nemovitosti/%s/%d', [
             $urlParts['scheme'],
             $urlParts['host'],
-            $type,
-            $subtype,
             $locality,
             $id,
         ]);

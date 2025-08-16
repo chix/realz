@@ -37,7 +37,7 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
      */
     public function getUnnotifiedAdvertsForToken(PushNotificationToken $token): array
     {
-        $oneHourAgo = (new \DateTime())->sub(new \DateInterval('P1YT1H'))->format('Y-m-d H:i:s');
+        $oneHourAgo = (new \DateTime())->sub(new \DateInterval('PT1H'))->format('Y-m-d H:i:s');
         $ids = $this->getEntityManager()->createQueryBuilder()
             ->select('ad.id')
             ->from(PushNotificationToken::class, 'pnt')
