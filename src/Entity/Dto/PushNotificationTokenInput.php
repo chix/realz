@@ -64,6 +64,10 @@ final class PushNotificationTokenInput
                                 'type' => 'number',
                                 'example' => 0,
                             ],
+                            'includeNoPrice' => [
+                                'type' => 'boolean',
+                                'example' => false,
+                            ],
                         ],
                     ],
                     'disposition' => [

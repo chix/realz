@@ -85,12 +85,13 @@ final class PushNotificationTokenRepository extends ServiceEntityRepository
                             }
                             break;
                         case 'price':
+                            $includeNoPrice = $filter['includeNoPrice'] ?? false;
                             if (isset($filter['lte'])) {
-                                $qb->andWhere('(a.price IS NULL OR a.price <= :ltePrice)');
+                                $qb->andWhere($includeNoPrice ? '(a.price IS NULL OR a.price <= :ltePrice)' : 'a.price <= :ltePrice');
                                 $qb->setParameter('ltePrice', $filter['lte']);
                             }
                             if (isset($filter['gte'])) {
-                                $qb->andWhere('(a.price IS NULL OR a.price >= :gtePrice)');
+                                $qb->andWhere($includeNoPrice ? '(a.price IS NULL OR a.price >= :gtePrice)' : 'a.price >= :gtePrice');
                                 $qb->setParameter('gtePrice', $filter['gte']);
                             }
                             break;

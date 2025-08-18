@@ -183,7 +183,7 @@ final class SrealityCrawler extends CrawlerBase implements CrawlerInterface
                     if ($existingAdvert) {
                         $currentPrice = $ad['price_czk']['value_raw'] ?? null;
                         $existingPrice = $existingAdvert->getPrice();
-                        if ($currentPrice === $existingPrice || $currentPrice === 1) {
+                        if ($currentPrice === $existingPrice || 1 === $currentPrice) {
                             continue;
                         }
                     }
