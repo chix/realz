@@ -161,17 +161,15 @@ final class PushNotificationTokenProcessor implements ProcessorInterface
                         }
                         break;
                     case 'price':
-                        if (!isset($filter['gte']) && !isset($filter['lte'])) {
-                            throw $this->createValidationException('filters', 'Either gte or lte have to be set on the price filter.');
-                        }
-                        $locationFilters[$type] = [];
+                        $locationFilters[$type] = [
+                            'includeNoPrice' => boolval($filter['includeNoPrice'] ?? false),
+                        ];
                         if (isset($filter['gte'])) {
                             $locationFilters[$type]['gte'] = intval($filter['gte']);
                         }
                         if (isset($filter['lte'])) {
                             $locationFilters[$type]['lte'] = intval($filter['lte']);
                         }
-                        $locationFilters[$type]['includeNoPrice'] = boolval($filter['includeNoPrice'] ?? false);
                         break;
                     default:
                         throw $this->createValidationException('filters', "Unsupported filter type {$type}.");
